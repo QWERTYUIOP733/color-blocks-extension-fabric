@@ -144,17 +144,17 @@ public class MardCraftingScreen extends AbstractContainerScreen<MardCraftingScre
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
         // 颜色面板滚动
         if (mouseX >= this.leftPos && mouseX < this.leftPos + COLOR_PANEL_WIDTH &&
                 mouseY >= this.topPos && mouseY < this.topPos + COLOR_PANEL_HEIGHT) {
             List<ColorDefinition> colors = ColorRegistry.getColorsBySeries(currentSeries);
             int maxOffset = Math.max(0, colors.size() - 30);
             colorScrollOffset = Math.max(0, Math.min(maxOffset,
-                    colorScrollOffset - (int) Math.signum(verticalAmount)));
+                    colorScrollOffset - (int) Math.signum(amount)));
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+        return super.mouseScrolled(mouseX, mouseY, amount);
     }
 
     @Override

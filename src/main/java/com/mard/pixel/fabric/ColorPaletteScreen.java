@@ -123,11 +123,11 @@ public class ColorPaletteScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
         List<ColorDefinition> colors = ColorRegistry.getColorsBySeries(currentSeries);
         int maxOffset = Math.max(0, colors.size() - COLOR_SLOTS_PER_ROW * 5);
         scrollOffset = Math.max(0, Math.min(maxOffset,
-                scrollOffset - (int) Math.signum(verticalAmount) * COLOR_SLOTS_PER_ROW));
+                scrollOffset - (int) Math.signum(amount) * COLOR_SLOTS_PER_ROW));
         return true;
     }
 

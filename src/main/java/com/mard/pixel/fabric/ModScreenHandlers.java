@@ -14,6 +14,6 @@ public class ModScreenHandlers {
         MARD_CRAFTING_TABLE = Registry.register(
                 BuiltInRegistries.MENU,
                 MardPixelMod.id("mard_crafting_table"),
-                new MenuType<>(MardCraftingScreenHandler::new));
+                new MenuType<>((syncId, playerInventory) -> new MardCraftingScreenHandler(syncId, playerInventory)));
     }
 }
