@@ -1,6 +1,5 @@
 package com.mard.pixel.fabric;
 
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -33,13 +32,13 @@ public class MardCraftingScreenHandler extends AbstractContainerMenu {
         // 添加3x3合成网格槽位
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
-                this.addSlot(new Slot(blockEntity.getInventory(),
+                this.addSlot(new Slot(blockEntity,
                         row * 3 + col, 30 + col * 18, 17 + row * 18));
             }
         }
 
         // 添加输出槽位
-        this.addSlot(new Slot(blockEntity.getInventory(), RESULT_SLOT, 124, 35) {
+        this.addSlot(new Slot(blockEntity, RESULT_SLOT, 124, 35) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false;
@@ -67,9 +66,8 @@ public class MardCraftingScreenHandler extends AbstractContainerMenu {
     }
 
     // 客户端构造函数
-    public MardCraftingScreenHandler(int syncId, Inventory playerInventory, FriendlyByteBuf buf) {
-        this(syncId, playerInventory, (MardCraftingTableBlockEntity) playerInventory.player.level()
-                .getBlockEntity(buf.readBlockPos()));
+    public MardCraftingScreenHandler(int syncId, Inventory playerInventory) {
+        this(syncId, playerInventory, (MardCraftingTableBlockEntity) null);
     }
 
     @Override

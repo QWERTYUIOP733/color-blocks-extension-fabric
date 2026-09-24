@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  * 方块染色台方块实体
  * 管理3x3合成网格和输出槽
  */
-public class MardCraftingTableBlockEntity extends BlockEntity implements MenuProvider {
+public class MardCraftingTableBlockEntity extends BlockEntity implements MenuProvider, Container {
     // 3x3合成网格 (9个槽位) + 1个输出槽
     private final NonNullList<ItemStack> inventory = NonNullList.withSize(10, ItemStack.EMPTY);
     // 当前选中的颜色编号
@@ -30,7 +31,7 @@ public class MardCraftingTableBlockEntity extends BlockEntity implements MenuPro
     }
 
     public void tick() {
-        if (!level.isClientSide) {
+        if (level != null && !level.isClientSide) {
             // 更新合成结果
             updateCraftingResult();
         }
@@ -138,5 +139,71 @@ public class MardCraftingTableBlockEntity extends BlockEntity implements MenuPro
     @Override
     public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player player) {
         return new MardCraftingScreenHandler(syncId, playerInventory, this);
+    }
+
+    // Container接口实现
+    @Override
+    public int getContainerSize() {
+        return inventory.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return inventory.stream().allMatch(ItemStack::isEmpty);
+    }
+
+    @Override
+    public ItemStack getItem(int slot) {
+        return slot >= 0 && slot < inventory.size() ? inventory.get(slot) : ItemStack.EMPTY;
+    }
+
+    @Override
+    public ItemStack removeItem(int slot, int amount) {
+        if (slot >= 0 && slot < inventory.size()) {
+            ItemStack stack = inventory.get(slot);
+            ItemStack result = stack.split(amount);
+            if (stack.isEmpty()) {
+                inventory.set(slot, ItemStack.EMPTY);
+            }
+            setChanged();
+            return result;
+        }
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public ItemStack removeItemNoUpdate(int slot) {
+        if (slot >= 0 && slot < inventory.size()) {
+            ItemStack stack = inventory.get(slot);
+            inventory.set(slot, ItemStack.EMPTY);
+            return stack;
+        }
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public void setItem(int slot, ItemStack stack) {
+        if (slot >= 0 && slot < inventory.size()) {
+            inventory.set(slot, stack);
+            setChanged();
+        }
+    }
+
+    @Override
+    public void setChanged() {
+        super.setChanged();
+    }
+
+    @Override
+    public boolean stillValid(Player player) {
+        if (level == null || level.getBlockEntity(worldPosition) != this) {
+            return false;
+        }
+        return player.distanceToSqr(worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5) <= 64.0;
+    }
+
+    @Override
+    public void clearContent() {
+        inventory.clear();
     }
 }
