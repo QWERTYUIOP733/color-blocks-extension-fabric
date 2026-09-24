@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "mard_pixel",
+  "version": "${version}",
+  "name": "Color Blocks Extension",
+  "description": "A Minecraft mod adding 221 standard solid color blocks with Rainbow Powder universal crafting and Block Coloring Table, designed for pixel art creators and builders.",
+  "authors": [
+    "QWERTYUIOP733"
+  ],
+  "contact": {
+    "homepage": "https://github.com/QWERTYUIOP733/-mod-",
+    "sources": "https://github.com/QWERTYUIOP733/-mod-",
+    "issues": "https://github.com/QWERTYUIOP733/-mod-/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/mard_pixel/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.mard.pixel.fabric.MardPixelMod"
+    ],
+    "client": [
+      "com.mard.pixel.fabric.MardPixelClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.3",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "jei": "*"
+  }
+}

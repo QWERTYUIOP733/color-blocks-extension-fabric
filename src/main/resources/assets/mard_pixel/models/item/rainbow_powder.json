@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "mard_pixel:item/rainbow_powder"
+  }
+}

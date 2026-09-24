@@ -1,0 +1,12 @@
+﻿{
+    "ingredients":  [
+                        {
+                            "item":  "minecraft:orange_dye"
+                        }
+                    ],
+    "result":  {
+                   "count":  1,
+                   "item":  "mard_pixel:rainbow_powder"
+               },
+    "type":  "minecraft:crafting_shapeless"
+}
