@@ -24,7 +24,7 @@ public class ColorPaletteScreen extends Screen {
         boolean hit(double mx, double my) { return mx >= x && mx < x + w && my >= y && my < y + h; }
     }
 
-    private static final int SW = 20, GAP = 3;
+    private static final int SW = 20, GAP = 4, CELL_W = 44, CELL_H = 40;
 
     private Page currentPage = Page.MAIN;
     private final List<Entry> swatches = new ArrayList<>();
@@ -85,6 +85,7 @@ public class ColorPaletteScreen extends Screen {
     }
 
     private void initSwatchesPage() {
+        scrollOffset = 0;
         addRenderableWidget(Button.builder(Component.literal("← 返回"), btn -> {
             currentPage = Page.MAIN;
             statusMsg = "";
@@ -232,20 +233,20 @@ public class ColorPaletteScreen extends Screen {
 
         if (isSurvivalRender) {
             String warnText = "生存模式：仅可查看颜色，点击不会获取方块，请使用方块染色台合成";
-            int warnWidth = font.width(warnText) + 20;
-            g.fill(5, 5, Math.min(width - 10, warnWidth), 28, 0x88FF3333);
-            g.fill(6, 6, Math.min(width - 11, warnWidth - 1), 27, 0xFFFF5555);
-            g.drawString(font, warnText, 15, 12, 0xFFFFFF);
+            int warnWidth = Math.min(width - 20, font.width(warnText) + 30);
+            g.fill(5, 4, 5 + warnWidth, 32, 0xCCFF3333);
+            g.fill(6, 5, 5 + warnWidth - 1, 31, 0xFFFF5555);
+            g.drawString(font, warnText, 15, 13, 0xFFFFFF);
         } else {
             String title = "颜色选取 - 点击色块获取一组（64个）";
-            g.drawString(font, title, 80, 12, 0xFFFFFF);
+            g.drawString(font, title, 10, 38, 0xFFFFFF);
         }
 
-        int contentY = 40;
+        int contentY = 44;
         int contentH = height - contentY - 20;
-        int cellW = SW + GAP + 8;
-        int cellH = SW + GAP + 10;
-        int cols = Math.max(8, Math.min(24, (width - 20) / cellW));
+        int cellW = CELL_W;
+        int cellH = CELL_H;
+        int cols = Math.max(6, Math.min(20, (width - 30) / cellW));
         int visibleRows = Math.max(1, contentH / cellH);
         int totalRows = (int) Math.ceil((double) swatches.size() / cols);
         int maxScroll = Math.max(0, totalRows - visibleRows);
@@ -326,14 +327,16 @@ public class ColorPaletteScreen extends Screen {
     private void drawSwatch(GuiGraphics g, int x, int y, int rgb, String label) {
         g.fill(x - 1, y - 1, x + SW + 1, y + SW + 1, 0xFF333333);
         g.fill(x, y, x + SW, y + SW, 0xFF000000 | rgb);
-        g.drawString(font, label, x, y + SW + 2, 0x999999, false);
+        int textX = x + (SW - font.width(label)) / 2;
+        if (textX < x) textX = x;
+        g.drawString(font, label, textX, y + SW + 3, 0xCCCCCC, false);
     }
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
         if (button == 0 && currentPage == Page.SWATCHES) {
             boolean isSurvivalClick = isSurvivalMode();
-            int cols = Math.max(8, Math.min(24, (width - 31) / 31));
+            int cols = Math.max(6, Math.min(20, (width - 30) / CELL_W));
             int startIdx = scrollOffset * cols;
             for (int i = 0; i < swatchRects.size() && startIdx + i < swatches.size(); i++) {
                 Rect r = swatchRects.get(i);
