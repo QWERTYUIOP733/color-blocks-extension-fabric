@@ -233,16 +233,17 @@ public class ColorPaletteScreen extends Screen {
 
         if (isSurvivalRender) {
             String warnText = "生存模式：仅可查看颜色，点击不会获取方块，请使用方块染色台合成";
-            int warnWidth = Math.min(width - 20, font.width(warnText) + 30);
-            g.fill(5, 4, 5 + warnWidth, 32, 0xCCFF3333);
-            g.fill(6, 5, 5 + warnWidth - 1, 31, 0xFFFF5555);
-            g.drawString(font, warnText, 15, 13, 0xFFFFFF);
+            int warnWidth = Math.min(width - 20, font.width(warnText) + 24);
+            int warnX = 6, warnY = 4, warnH = 26;
+            g.fill(warnX, warnY, warnX + warnWidth, warnY + warnH, 0xFF8B0000);
+            g.fill(warnX + 1, warnY + 1, warnX + warnWidth - 1, warnY + warnH - 1, 0xFFB22222);
+            g.drawString(font, warnText, warnX + 10, warnY + (warnH - 8) / 2 + 1, 0xFFFFE4B5);
         } else {
             String title = "颜色选取 - 点击色块获取一组（64个）";
-            g.drawString(font, title, 10, 38, 0xFFFFFF);
+            g.drawString(font, title, 10, 12, 0xFFFFFF);
         }
 
-        int contentY = 44;
+        int contentY = 36;
         int contentH = height - contentY - 20;
         int cellW = CELL_W;
         int cellH = CELL_H;
