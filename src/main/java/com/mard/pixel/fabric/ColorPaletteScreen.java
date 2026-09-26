@@ -108,13 +108,8 @@ public class ColorPaletteScreen extends Screen {
 
             if (mouseX >= x && mouseX < x + COLOR_SLOT_SIZE &&
                     mouseY >= y && mouseY < y + COLOR_SLOT_SIZE) {
-                // 获取颜色方块（创造模式）
-                if (this.minecraft != null && this.minecraft.player != null &&
-                        this.minecraft.player.getAbilities().instabuild) {
-                    ItemStack stack = new ItemStack(ModItems.getItemByColorCode(color.getCode()));
-                    stack.setCount(64);
-                    this.minecraft.player.getInventory().add(stack);
-                }
+                // 发送网络包请求物品（服务端会检查游戏模式）
+                MardPixelClient.sendRequestItem(color.getCode());
                 return true;
             }
         }

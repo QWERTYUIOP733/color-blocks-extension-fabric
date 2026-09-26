@@ -52,7 +52,7 @@ public class MardCraftingScreenHandler extends AbstractContainerMenu {
 
             @Override
             public void onTake(Player player, ItemStack stack) {
-                blockEntity.takeResult(player);
+                blockEntity.consumeMaterials();
                 super.onTake(player, stack);
             }
         });
@@ -119,7 +119,7 @@ public class MardCraftingScreenHandler extends AbstractContainerMenu {
                 slot.onQuickCraft(itemstack1, itemstack);
             } else if (index >= PLAYER_INVENTORY_START) {
                 // 从玩家物品栏移动物品到合成网格
-                if (itemstack1.getItem() == ModItems.RAINBOW_POWDER) {
+                if (itemstack1.getItem() == ModItems.MARD_PIGMENT) {
                     if (!this.moveItemStackTo(itemstack1, CRAFTING_START, CRAFTING_END, false)) {
                         return ItemStack.EMPTY;
                     }
@@ -171,7 +171,7 @@ public class MardCraftingScreenHandler extends AbstractContainerMenu {
      */
     public void setSelectedColor(String colorCode) {
         if (blockEntity != null) {
-            blockEntity.setSelectedColor(colorCode);
+            blockEntity.selectColor(colorCode);
         }
     }
 

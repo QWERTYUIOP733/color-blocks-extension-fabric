@@ -72,4 +72,36 @@ public class ColorRegistry {
     public static int getTotalColors() {
         return ALL_COLORS.size();
     }
+
+    /**
+     * 按色号查找（别名）
+     */
+    public static ColorDefinition getByCode(String code) {
+        if (code == null) return null;
+        return COLORS_BY_CODE.get(code.toUpperCase().trim());
+    }
+
+    /**
+     * 查找最接近的颜色（RGB欧氏距离）
+     */
+    public static ColorDefinition findNearest(int rgb) {
+        if (ALL_COLORS.isEmpty()) return null;
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = rgb & 0xFF;
+
+        ColorDefinition nearest = null;
+        double minDist = Double.MAX_VALUE;
+        for (ColorDefinition c : ALL_COLORS) {
+            double dist = Math.sqrt(
+                    Math.pow(c.getRed() - r, 2) +
+                    Math.pow(c.getGreen() - g, 2) +
+                    Math.pow(c.getBlue() - b, 2));
+            if (dist < minDist) {
+                minDist = dist;
+                nearest = c;
+            }
+        }
+        return nearest;
+    }
 }

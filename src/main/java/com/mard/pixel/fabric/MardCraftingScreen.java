@@ -134,8 +134,8 @@ public class MardCraftingScreen extends AbstractContainerScreen<MardCraftingScre
 
             if (mouseX >= x && mouseX < x + COLOR_SLOT_SIZE &&
                     mouseY >= y && mouseY < y + COLOR_SLOT_SIZE) {
-                // 选中颜色
-                menu.setSelectedColor(color.getCode());
+                // 发送网络包选择颜色（客户端->服务端同步）
+                MardPixelClient.sendSelectColor(color.getCode());
                 return true;
             }
         }

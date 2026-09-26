@@ -1,12 +1,12 @@
 ﻿{
     "ingredients":  [
                         {
-                            "item":  "minecraft:pink_dye"
+                            "item":  "minecraft:red_dye"
                         }
                     ],
     "result":  {
                    "count":  1,
-                   "item":  "mard_pixel:rainbow_powder"
+                   "item":  "mard_pixel:mard_pigment"
                },
     "type":  "minecraft:crafting_shapeless"
 }
