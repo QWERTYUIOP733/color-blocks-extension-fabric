@@ -1,178 +1,267 @@
 package com.mard.pixel.fabric;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import org.lwjgl.glfw.GLFW;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
 /**
  * 方块染色台GUI界面
- * 左侧颜色选择面板(100px) + 中间3x3合成网格 + 右侧输出槽
- * 总宽度276px，高度166px
+ * 布局与原版工作台一致，左侧添加颜色选择列表（仅七彩粉末模式）
+ * 颜色面板固定放在主界面左侧，避免与右侧JEI物品管理器冲突
  */
 public class MardCraftingScreen extends AbstractContainerScreen<MardCraftingScreenHandler> {
-    private static final ResourceLocation TEXTURE =
-            new ResourceLocation(MardPixelMod.MOD_ID, "textures/gui/mard_crafting_table.png");
+
+    private static final int BASE_WIDTH = 176;
+    private static final int BASE_HEIGHT = 166;
 
     // 颜色选择面板
-    private static final int COLOR_PANEL_WIDTH = MardCraftingScreenHandler.COLOR_PANEL_WIDTH;
+    private static final int COLOR_PANEL_DEFAULT_WIDTH = 130;
+    private static final int COLOR_PANEL_MIN_WIDTH = 80;
     private static final int COLOR_PANEL_HEIGHT = 166;
-    private static final int COLOR_SLOT_SIZE = 14;
-    private static final int COLOR_SLOTS_PER_ROW = 5;
-    private static final int COLOR_PANEL_PADDING = 6;
-    private static final int MAX_VISIBLE_COLORS = 30;
+    private static final int COLOR_PANEL_GAP = 4;
+    private static final int COLOR_PANEL_SCREEN_LEFT_MARGIN = 2;
+    private static final int COLOR_ITEM_HEIGHT = 22;
+    private static final int COLOR_SWATCH_SIZE = 16;
+    private static final int COLOR_TEXT_PADDING = 4;
 
-    // 当前显示的色系
-    private String currentSeries = "A";
-    // 颜色面板滚动偏移
-    private int colorScrollOffset = 0;
+    private int panelWidth = COLOR_PANEL_DEFAULT_WIDTH;
+    private int maxVisibleColors = (COLOR_PANEL_HEIGHT - 20) / COLOR_ITEM_HEIGHT;
+    private int scrollOffset = 0;
+    private String selectedColor = "";
 
     public MardCraftingScreen(MardCraftingScreenHandler handler, Inventory playerInventory, Component title) {
         super(handler, playerInventory, title);
-        this.imageWidth = 176 + COLOR_PANEL_WIDTH; // 276
-        this.imageHeight = 166;
+        this.imageWidth = BASE_WIDTH;
+        this.imageHeight = BASE_HEIGHT;
     }
 
     @Override
     protected void init() {
         super.init();
-        // 标题和背包标签位置（在合成区域上方）
-        this.titleLabelX = COLOR_PANEL_WIDTH + 8;
-        this.inventoryLabelX = COLOR_PANEL_WIDTH + 8;
+        this.titleLabelX = 8;
+        this.titleLabelY = 6;
+        this.inventoryLabelX = 8;
+        this.inventoryLabelY = this.imageHeight - 94;
+        updatePanelWidth();
+    }
+
+    private void updatePanelWidth() {
+        int availableWidth = this.leftPos - COLOR_PANEL_SCREEN_LEFT_MARGIN - COLOR_PANEL_GAP;
+        panelWidth = Math.max(COLOR_PANEL_MIN_WIDTH, Math.min(COLOR_PANEL_DEFAULT_WIDTH, availableWidth));
+        maxVisibleColors = Math.max(3, (COLOR_PANEL_HEIGHT - 20) / COLOR_ITEM_HEIGHT);
+        int totalColors = ColorRegistry.getAllColors().size();
+        int maxOffset = Math.max(0, totalColors - maxVisibleColors);
+        scrollOffset = Math.min(scrollOffset, maxOffset);
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics);
-        super.render(graphics, mouseX, mouseY, delta);
+        super.render(graphics, mouseX, mouseY, partialTick);
         this.renderTooltip(graphics, mouseX, mouseY);
+
+        if (menu.hasPigment()) {
+            renderColorPanel(graphics, mouseX, mouseY);
+        }
     }
 
     @Override
-    protected void renderBg(GuiGraphics graphics, float delta, int mouseX, int mouseY) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
+        int x = this.leftPos;
+        int y = this.topPos;
 
-        // 绘制颜色选择面板背景（左侧）
-        int panelX = this.leftPos;
-        int panelY = this.topPos;
-        graphics.fill(panelX, panelY, panelX + COLOR_PANEL_WIDTH, panelY + COLOR_PANEL_HEIGHT, 0xFFC6C6C6);
-        graphics.fill(panelX + 1, panelY + 1, panelX + COLOR_PANEL_WIDTH - 1, panelY + COLOR_PANEL_HEIGHT - 1, 0xFF8B8B8B);
+        // 主背景
+        graphics.fill(x, y, x + BASE_WIDTH, y + BASE_HEIGHT, 0xFFC6C6C6);
+        // 标题栏
+        graphics.fill(x, y, x + BASE_WIDTH, y + 16, 0xFF8B8B8B);
 
-        // 绘制色系标签
-        graphics.drawString(this.font, currentSeries,
-                panelX + COLOR_PANEL_PADDING, panelY + 4, 0xFFFFFF, false);
-        graphics.drawString(this.font, "(1-9切换)",
-                panelX + COLOR_PANEL_PADDING, panelY + 14, 0xCCCCCC, false);
-
-        // 绘制主GUI背景（合成网格部分，右侧176px）
-        RenderSystem.setShaderTexture(0, TEXTURE);
-        int mainX = this.leftPos + COLOR_PANEL_WIDTH;
-        graphics.blit(TEXTURE, mainX, this.topPos, 0, 0, 176, this.imageHeight);
-
-        // 绘制颜色选择槽位
-        renderColorSlots(graphics, mouseX, mouseY);
-    }
-
-    /**
-     * 绘制颜色选择槽位
-     */
-    private void renderColorSlots(GuiGraphics graphics, int mouseX, int mouseY) {
-        List<ColorDefinition> colors = ColorRegistry.getColorsBySeries(currentSeries);
-        int startX = this.leftPos + COLOR_PANEL_PADDING;
-        int startY = this.topPos + 28;
-
-        int endIndex = Math.min(colorScrollOffset + MAX_VISIBLE_COLORS, colors.size());
-        for (int i = colorScrollOffset; i < endIndex; i++) {
-            ColorDefinition color = colors.get(i);
-            int slotIndex = i - colorScrollOffset;
-            int row = slotIndex / COLOR_SLOTS_PER_ROW;
-            int col = slotIndex % COLOR_SLOTS_PER_ROW;
-            int x = startX + col * (COLOR_SLOT_SIZE + 3);
-            int y = startY + row * (COLOR_SLOT_SIZE + 3);
-
-            // 绘制颜色方块（带边框）
-            graphics.fill(x, y, x + COLOR_SLOT_SIZE, y + COLOR_SLOT_SIZE, 0xFF000000);
-            graphics.fill(x + 1, y + 1, x + COLOR_SLOT_SIZE - 1, y + COLOR_SLOT_SIZE - 1,
-                    0xFF000000 | color.getColorValue());
-
-            // 高亮选中的颜色
-            if (color.getCode().equals(menu.getSelectedColor())) {
-                graphics.fill(x - 1, y - 1, x + COLOR_SLOT_SIZE + 1, y, 0xFFFFFFFF);
-                graphics.fill(x - 1, y + COLOR_SLOT_SIZE, x + COLOR_SLOT_SIZE + 1, y + COLOR_SLOT_SIZE + 1, 0xFFFFFFFF);
-                graphics.fill(x - 1, y, x, y + COLOR_SLOT_SIZE, 0xFFFFFFFF);
-                graphics.fill(x + COLOR_SLOT_SIZE, y, x + COLOR_SLOT_SIZE + 1, y + COLOR_SLOT_SIZE, 0xFFFFFFFF);
-            }
-
-            // 鼠标悬停提示
-            if (mouseX >= x && mouseX < x + COLOR_SLOT_SIZE &&
-                    mouseY >= y && mouseY < y + COLOR_SLOT_SIZE) {
-                graphics.renderTooltip(this.font,
-                        Component.literal(color.getCode() + " " + color.getHex()),
-                        mouseX, mouseY);
+        // 3x3合成网格槽位背景
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                int slotX = x + MardCraftingScreenHandler.GRID_START_X + col * MardCraftingScreenHandler.SLOT_SIZE;
+                int slotY = y + MardCraftingScreenHandler.GRID_START_Y + row * MardCraftingScreenHandler.SLOT_SIZE;
+                drawSlotBackground(graphics, slotX, slotY);
             }
         }
+
+        // 结果槽
+        int resultX = x + MardCraftingScreenHandler.RESULT_X;
+        int resultY = y + MardCraftingScreenHandler.RESULT_Y;
+        drawSlotBackground(graphics, resultX, resultY);
+
+        // 箭头
+        int arrowX = x + 90;
+        int arrowY = y + 38;
+        graphics.fill(arrowX, arrowY + 3, arrowX + 22, arrowY + 7, 0xFF555555);
+        graphics.fill(arrowX + 18, arrowY, arrowX + 22, arrowY + 10, 0xFF555555);
+
+        // 玩家背包
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 9; col++) {
+                int slotX = x + MardCraftingScreenHandler.PLAYER_INV_X + col * MardCraftingScreenHandler.SLOT_SIZE;
+                int slotY = y + MardCraftingScreenHandler.PLAYER_INV_Y + row * MardCraftingScreenHandler.SLOT_SIZE;
+                drawSlotBackground(graphics, slotX, slotY);
+            }
+        }
+
+        // 快捷栏
+        for (int col = 0; col < 9; col++) {
+            int slotX = x + MardCraftingScreenHandler.PLAYER_INV_X + col * MardCraftingScreenHandler.SLOT_SIZE;
+            int slotY = y + MardCraftingScreenHandler.HOTBAR_Y;
+            drawSlotBackground(graphics, slotX, slotY);
+        }
+    }
+
+    private void drawSlotBackground(GuiGraphics graphics, int x, int y) {
+        int size = MardCraftingScreenHandler.SLOT_SIZE;
+        graphics.fill(x + 1, y + 1, x + size - 1, y + size - 1, 0xFF8B8B8B);
+        graphics.fill(x, y, x + size, y + 1, 0xFFFFFFFF);
+        graphics.fill(x, y, x + 1, y + size, 0xFFFFFFFF);
+        graphics.fill(x, y + size - 1, x + size, y + size, 0xFF373737);
+        graphics.fill(x + size - 1, y, x + size, y + size, 0xFF373737);
+    }
+
+    private void renderColorPanel(GuiGraphics graphics, int mouseX, int mouseY) {
+        updatePanelWidth();
+
+        int panelX = this.leftPos - panelWidth - COLOR_PANEL_GAP;
+        panelX = Math.max(COLOR_PANEL_SCREEN_LEFT_MARGIN, panelX);
+        int panelY = this.topPos;
+
+        // 面板背景
+        graphics.fill(panelX, panelY, panelX + panelWidth, panelY + COLOR_PANEL_HEIGHT, 0xFFC6C6C6);
+        graphics.fill(panelX, panelY, panelX + panelWidth, panelY + 1, 0xFFFFFFFF);
+        graphics.fill(panelX, panelY, panelX + 1, panelY + COLOR_PANEL_HEIGHT, 0xFFFFFFFF);
+        graphics.fill(panelX, panelY + COLOR_PANEL_HEIGHT - 1, panelX + panelWidth, panelY + COLOR_PANEL_HEIGHT, 0xFF373737);
+        graphics.fill(panelX + panelWidth - 1, panelY, panelX + panelWidth, panelY + COLOR_PANEL_HEIGHT, 0xFF373737);
+
+        // 标题栏
+        graphics.fill(panelX + 1, panelY + 1, panelX + panelWidth - 1, panelY + 14, 0xFF8B8B8B);
+        graphics.drawString(this.font, "选择颜色", panelX + 4, panelY + 4, 0xFFFFFFFF, false);
+
+        List<ColorDefinition> allColors = ColorRegistry.getAllColors();
+        int totalColors = allColors.size();
+        int startIndex = Math.max(0, Math.min(scrollOffset, totalColors - 1));
+        int endIndex = Math.min(startIndex + maxVisibleColors, totalColors);
+        int listStartY = panelY + 18;
+
+        for (int i = startIndex; i < endIndex; i++) {
+            ColorDefinition color = allColors.get(i);
+            int itemY = listStartY + (i - startIndex) * COLOR_ITEM_HEIGHT;
+
+            // 选中高亮
+            if (color.getCode().equals(selectedColor)) {
+                graphics.fill(panelX + 2, itemY, panelX + panelWidth - 2, itemY + COLOR_ITEM_HEIGHT - 1, 0xFF90EE90);
+            }
+
+            // 颜色方块
+            int swatchX = panelX + 4;
+            int swatchY = itemY + 3;
+            graphics.fill(swatchX, swatchY, swatchX + COLOR_SWATCH_SIZE, swatchY + COLOR_SWATCH_SIZE, 0xFF000000);
+            graphics.fill(swatchX + 1, swatchY + 1, swatchX + COLOR_SWATCH_SIZE - 1, swatchY + COLOR_SWATCH_SIZE - 1,
+                    0xFF000000 | color.getColorValue());
+
+            // 文字
+            int textX = swatchX + COLOR_SWATCH_SIZE + COLOR_TEXT_PADDING;
+            graphics.drawString(this.font, color.getCode(), textX, itemY + 3, 0x404040, false);
+            String rgbText = String.format("RGB:%d,%d,%d", color.getRed(), color.getGreen(), color.getBlue());
+            graphics.drawString(this.font, rgbText, textX, itemY + 13, 0x606060, false);
+        }
+
+        // 滚动条
+        if (totalColors > maxVisibleColors) {
+            int scrollbarX = panelX + panelWidth - 6;
+            int scrollbarY = listStartY;
+            int scrollbarHeight = COLOR_PANEL_HEIGHT - 22;
+            int thumbHeight = Math.max(20, (int) ((float) maxVisibleColors / totalColors * scrollbarHeight));
+            int maxOffset = Math.max(0, totalColors - maxVisibleColors);
+            int thumbY = scrollbarY + (maxOffset > 0 ? (int) ((float) scrollOffset / maxOffset * (scrollbarHeight - thumbHeight)) : 0);
+            graphics.fill(scrollbarX, scrollbarY, scrollbarX + 4, scrollbarY + scrollbarHeight, 0xFF8B8B8B);
+            graphics.fill(scrollbarX, thumbY, scrollbarX + 4, thumbY + thumbHeight, 0xFF555555);
+        }
+    }
+
+    private int[] getColorPanelBounds() {
+        updatePanelWidth();
+        int panelX = this.leftPos - panelWidth - COLOR_PANEL_GAP;
+        panelX = Math.max(COLOR_PANEL_SCREEN_LEFT_MARGIN, panelX);
+        return new int[]{panelX, this.topPos};
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        if (menu.hasPigment()) {
+            int[] bounds = getColorPanelBounds();
+            int panelX = bounds[0];
+            int panelY = bounds[1];
+            int listStartY = panelY + 18;
+
+            if (mouseX >= panelX && mouseX <= panelX + panelWidth &&
+                mouseY >= listStartY && mouseY <= panelY + COLOR_PANEL_HEIGHT) {
+                int totalColors = ColorRegistry.getAllColors().size();
+                int maxOffset = Math.max(0, totalColors - maxVisibleColors);
+                scrollOffset = Math.max(0, Math.min(scrollOffset - (int) delta, maxOffset));
+                return true;
+            }
+        }
+        return super.mouseScrolled(mouseX, mouseY, delta);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // 检查颜色选择槽位点击
-        List<ColorDefinition> colors = ColorRegistry.getColorsBySeries(currentSeries);
-        int startX = this.leftPos + COLOR_PANEL_PADDING;
-        int startY = this.topPos + 28;
+        if (menu.hasPigment() && button == 0) {
+            int[] bounds = getColorPanelBounds();
+            int panelX = bounds[0];
+            int panelY = bounds[1];
+            int listStartY = panelY + 18;
 
-        int endIndex = Math.min(colorScrollOffset + MAX_VISIBLE_COLORS, colors.size());
-        for (int i = colorScrollOffset; i < endIndex; i++) {
-            ColorDefinition color = colors.get(i);
-            int slotIndex = i - colorScrollOffset;
-            int row = slotIndex / COLOR_SLOTS_PER_ROW;
-            int col = slotIndex % COLOR_SLOTS_PER_ROW;
-            int x = startX + col * (COLOR_SLOT_SIZE + 3);
-            int y = startY + row * (COLOR_SLOT_SIZE + 3);
+            if (mouseX >= panelX && mouseX <= panelX + panelWidth &&
+                mouseY >= listStartY && mouseY <= panelY + COLOR_PANEL_HEIGHT) {
 
-            if (mouseX >= x && mouseX < x + COLOR_SLOT_SIZE &&
-                    mouseY >= y && mouseY < y + COLOR_SLOT_SIZE) {
-                // 发送网络包选择颜色
-                MardPixelClient.sendSelectColor(color.getCode());
-                return true;
+                int itemIndex = (int) ((mouseY - listStartY) / COLOR_ITEM_HEIGHT);
+                int colorIndex = scrollOffset + itemIndex;
+                List<ColorDefinition> allColors = ColorRegistry.getAllColors();
+
+                if (colorIndex >= 0 && colorIndex < allColors.size()) {
+                    ColorDefinition color = allColors.get(colorIndex);
+                    selectedColor = color.getCode();
+                    MardPixelClient.sendSelectColor(color.getCode());
+                    return true;
+                }
             }
         }
-
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-        // 颜色面板滚动
-        if (mouseX >= this.leftPos && mouseX < this.leftPos + COLOR_PANEL_WIDTH &&
-                mouseY >= this.topPos && mouseY < this.topPos + COLOR_PANEL_HEIGHT) {
-            List<ColorDefinition> colors = ColorRegistry.getColorsBySeries(currentSeries);
-            int maxOffset = Math.max(0, colors.size() - MAX_VISIBLE_COLORS);
-            colorScrollOffset = Math.max(0, Math.min(maxOffset,
-                    colorScrollOffset - (int) Math.signum(amount) * COLOR_SLOTS_PER_ROW));
-            return true;
-        }
-        return super.mouseScrolled(mouseX, mouseY, amount);
-    }
+    protected void renderTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+        super.renderTooltip(graphics, mouseX, mouseY);
 
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        // 数字键切换色系
-        if (keyCode >= GLFW.GLFW_KEY_1 && keyCode <= GLFW.GLFW_KEY_9) {
-            String[] series = {"A", "B", "C", "D", "E", "F", "G", "H", "M"};
-            int index = keyCode - GLFW.GLFW_KEY_1;
-            if (index < series.length) {
-                currentSeries = series[index];
-                colorScrollOffset = 0;
-                return true;
+        if (menu.hasPigment()) {
+            int[] bounds = getColorPanelBounds();
+            int panelX = bounds[0];
+            int panelY = bounds[1];
+            int listStartY = panelY + 18;
+
+            if (mouseX >= panelX && mouseX <= panelX + panelWidth &&
+                mouseY >= listStartY && mouseY <= panelY + COLOR_PANEL_HEIGHT) {
+
+                int itemIndex = (int) ((mouseY - listStartY) / COLOR_ITEM_HEIGHT);
+                int colorIndex = scrollOffset + itemIndex;
+                List<ColorDefinition> allColors = ColorRegistry.getAllColors();
+
+                if (colorIndex >= 0 && colorIndex < allColors.size()) {
+                    ColorDefinition color = allColors.get(colorIndex);
+                    ItemStack stack = new ItemStack(ModItems.getItemByColorCode(color.getCode()));
+                    if (!stack.isEmpty()) {
+                        graphics.renderTooltip(this.font, stack, mouseX, mouseY);
+                    }
+                }
             }
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 }

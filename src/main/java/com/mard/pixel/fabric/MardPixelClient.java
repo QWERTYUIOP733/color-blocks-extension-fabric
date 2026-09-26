@@ -3,14 +3,19 @@ package com.mard.pixel.fabric;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.List;
 
 /**
  * 客户端初始化类
@@ -42,6 +47,19 @@ public class MardPixelClient implements ClientModInitializer {
             while (keyOpenPalette.consumeClick()) {
                 if (client.player != null && client.screen == null) {
                     client.setScreen(new ColorPaletteScreen());
+                }
+            }
+        });
+
+        // 注册Tooltip清理（移除JEI等模组添加的额外信息，只保留色号+RGB）
+        ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
+            if (stack.getItem() instanceof MardBlockItem) {
+                // 从后往前移除，只保留第一行（名称）和包含RGB的行
+                for (int i = lines.size() - 1; i >= 1; i--) {
+                    String text = lines.get(i).getString();
+                    if (!text.contains("RGB")) {
+                        lines.remove(i);
+                    }
                 }
             }
         });

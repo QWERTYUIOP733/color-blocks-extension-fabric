@@ -55,7 +55,7 @@ public class MardCraftingTableBlockEntity extends BlockEntity implements Contain
     /**
      * 检查合成网格中是否有七彩粉末
      */
-    private boolean hasPigment() {
+    public boolean hasPigment() {
         for (int i = 0; i < GRID_SIZE; i++) {
             ItemStack stack = inventory.get(i);
             if (!stack.isEmpty() && isPigmentItem(stack)) {
