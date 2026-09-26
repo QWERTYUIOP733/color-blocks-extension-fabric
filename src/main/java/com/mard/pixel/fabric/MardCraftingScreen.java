@@ -100,7 +100,7 @@ public class MardCraftingScreen extends AbstractContainerScreen<MardCraftingScre
                     0xFF000000 | color.getColorValue());
 
             // 高亮选中的颜色
-            if (color.getCode().equals(menu.getBlockEntity().getSelectedColor())) {
+            if (color.getCode().equals(menu.getSelectedColor())) {
                 graphics.fill(x - 1, y - 1, x + COLOR_SLOT_SIZE + 1, y + 1, 0xFFFFFFFF);
                 graphics.fill(x - 1, y + COLOR_SLOT_SIZE - 1, x + COLOR_SLOT_SIZE + 1, y + COLOR_SLOT_SIZE + 1, 0xFFFFFFFF);
                 graphics.fill(x - 1, y, x + 1, y + COLOR_SLOT_SIZE, 0xFFFFFFFF);

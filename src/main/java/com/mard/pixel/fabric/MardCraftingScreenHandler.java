@@ -1,11 +1,13 @@
 package com.mard.pixel.fabric;
 
+import net.minecraft.core.NonNullList;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 /**
  * 方块染色台GUI处理器
@@ -14,6 +16,8 @@ import net.minecraft.world.item.ItemStack;
 public class MardCraftingScreenHandler extends AbstractContainerMenu {
     private final MardCraftingTableBlockEntity blockEntity;
     private final ContainerLevelAccess access;
+    private final NonNullList<ItemStack> clientInventory;
+    private final boolean isClient;
 
     // 槽位索引
     private static final int CRAFTING_START = 0;
@@ -28,6 +32,8 @@ public class MardCraftingScreenHandler extends AbstractContainerMenu {
         super(ModScreenHandlers.MARD_CRAFTING_TABLE, syncId);
         this.blockEntity = blockEntity;
         this.access = ContainerLevelAccess.create(blockEntity.getLevel(), blockEntity.getBlockPos());
+        this.clientInventory = null;
+        this.isClient = false;
 
         // 添加3x3合成网格槽位
         for (int row = 0; row < 3; row++) {
@@ -52,22 +58,48 @@ public class MardCraftingScreenHandler extends AbstractContainerMenu {
         });
 
         // 添加玩家物品栏
+        addPlayerInventory(playerInventory);
+    }
+
+    // 客户端构造函数 - 使用虚拟inventory避免NPE
+    public MardCraftingScreenHandler(int syncId, Inventory playerInventory) {
+        super(ModScreenHandlers.MARD_CRAFTING_TABLE, syncId);
+        this.blockEntity = null;
+        this.access = ContainerLevelAccess.NULL;
+        this.clientInventory = NonNullList.withSize(10, ItemStack.EMPTY);
+        this.isClient = true;
+
+        // 添加3x3合成网格槽位（使用虚拟inventory）
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                final int slotIndex = row * 3 + col;
+                this.addSlot(new Slot(new net.minecraft.world.SimpleContainer(10),
+                        slotIndex, 30 + col * 18, 17 + row * 18));
+            }
+        }
+
+        // 添加输出槽位
+        this.addSlot(new Slot(new net.minecraft.world.SimpleContainer(10), RESULT_SLOT, 124, 35) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return false;
+            }
+        });
+
+        // 添加玩家物品栏
+        addPlayerInventory(playerInventory);
+    }
+
+    private void addPlayerInventory(Inventory playerInventory) {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 this.addSlot(new Slot(playerInventory,
                         col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
             }
         }
-
-        // 添加玩家快捷栏
         for (int col = 0; col < 9; col++) {
             this.addSlot(new Slot(playerInventory, col, 8 + col * 18, 142));
         }
-    }
-
-    // 客户端构造函数
-    public MardCraftingScreenHandler(int syncId, Inventory playerInventory) {
-        this(syncId, playerInventory, (MardCraftingTableBlockEntity) null);
     }
 
     @Override
@@ -120,6 +152,9 @@ public class MardCraftingScreenHandler extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
+        if (isClient || blockEntity == null) {
+            return true;
+        }
         return stillValid(access, player, ModBlocks.MARD_CRAFTING_TABLE);
     }
 
@@ -127,10 +162,26 @@ public class MardCraftingScreenHandler extends AbstractContainerMenu {
         return blockEntity;
     }
 
+    public boolean isClient() {
+        return isClient;
+    }
+
     /**
      * 设置选中的颜色（从客户端发送）
      */
     public void setSelectedColor(String colorCode) {
-        blockEntity.setSelectedColor(colorCode);
+        if (blockEntity != null) {
+            blockEntity.setSelectedColor(colorCode);
+        }
+    }
+
+    /**
+     * 获取选中的颜色
+     */
+    public String getSelectedColor() {
+        if (blockEntity != null) {
+            return blockEntity.getSelectedColor();
+        }
+        return "A1";
     }
 }
