@@ -120,6 +120,14 @@ public class MardCraftingScreenHandler extends AbstractContainerMenu {
     }
 
     @Override
+    public void broadcastChanges() {
+        super.broadcastChanges();
+        if (blockEntity != null) {
+            blockEntity.setChanged();
+        }
+    }
+
+    @Override
     public ItemStack quickMoveStack(Player player, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
