@@ -223,7 +223,7 @@ public class ColorPaletteScreen extends Screen {
         // 大面板背景已移除（透明背景）
 
         // 左侧提示面板（红底黄字）
-        int tipPanelW = (int) (panelW * 0.16);
+        int tipPanelW = (int) (panelW * 0.18);
         int tipPanelX = panelX + 10;
         int tipPanelY = panelY + 10;
         int tipPanelH = panelH - 20;
@@ -235,27 +235,27 @@ public class ColorPaletteScreen extends Screen {
         g.fill(tipPanelX, tipPanelY, tipPanelX + 2, tipPanelY + tipPanelH, 0xFFFF4444);
         g.fill(tipPanelX + tipPanelW - 2, tipPanelY, tipPanelX + tipPanelW, tipPanelY + tipPanelH, 0xFF990000);
 
-        // 提示标题（黄字）
-        g.drawString(font, "提", tipPanelX + (tipPanelW - font.width("提")) / 2, tipPanelY + 12, 0xFFFF00);
-        g.drawString(font, "示", tipPanelX + (tipPanelW - font.width("示")) / 2, tipPanelY + 24, 0xFFFF00);
+        // 提示标题（横排，黄字）
+        String tipTitle = "提示";
+        g.drawString(font, tipTitle, tipPanelX + (tipPanelW - font.width(tipTitle)) / 2, tipPanelY + 10, 0xFFFF00);
 
         // 分隔线
-        g.fill(tipPanelX + 5, tipPanelY + 38, tipPanelX + tipPanelW - 5, tipPanelY + 39, 0xFFFFCC00);
+        g.fill(tipPanelX + 8, tipPanelY + 24, tipPanelX + tipPanelW - 8, tipPanelY + 25, 0xFFFFCC00);
 
-        // 提示内容（黄字，根据模式改变）
+        // 提示内容（黄字，精简版，根据模式改变）
         String[] tipLines;
         if (isSurvivalMode()) {
-            tipLines = new String[]{"生存模式", "", "仅可查看", "颜色", "", "合成请", "使用方块", "染色台", "", "七彩粉末", "可合成", "任意色块", "", "按钮二", "已禁用"};
+            tipLines = new String[]{"生存模式", "仅可查看颜色", "合成请使用", "方块染色台", "七彩粉末", "可合成任意色块", "按钮二已禁用"};
         } else {
-            tipLines = new String[]{"创造模式", "", "可直接", "获取方块", "", "按钮一：", "浏览色号", "点击获取", "", "按钮二：", "输入色号", "快速获取", "", "支持批量", "输入"};
+            tipLines = new String[]{"创造模式", "可直接获取方块", "按钮一：", "浏览色号点击获取", "按钮二：", "输入色号快速获取", "支持批量输入"};
         }
 
-        int tipY = tipPanelY + 48;
+        int tipY = tipPanelY + 35;
         for (String tipLine : tipLines) {
             if (tipY + 8 < tipPanelY + tipPanelH - 5) {
                 g.drawString(font, tipLine, tipPanelX + (tipPanelW - font.width(tipLine)) / 2, tipY, 0xFFFF00);
             }
-            tipY += 11;
+            tipY += 14;
         }
         // 右侧说明面板
         int infoPanelX = panelX + (int) (panelW * 0.55);
@@ -288,7 +288,7 @@ public class ColorPaletteScreen extends Screen {
         };
 
         int y = infoPanelY + 18;
-        int lineH = 8;
+        int lineH = 11;
         for (String line : lines) {
             if (y + 8 < infoPanelY + infoPanelH - 2) {
                 g.drawString(font, line, infoPanelX + 8, y, 0xCCCCCC);
