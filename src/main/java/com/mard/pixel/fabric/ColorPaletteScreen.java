@@ -242,8 +242,8 @@ public class ColorPaletteScreen extends Screen {
         g.fill(tipPanelX + tipPanelW - 1, tipPanelY, tipPanelX + tipPanelW, tipPanelY + tipPanelH, 0xFF444444);
 
         // 提示标题
-        g.drawString(textRenderer, "提", tipPanelX + (tipPanelW - textRenderer.getWidth("提")) / 2, tipPanelY + 15, 0xFFFFAA);
-        g.drawString(textRenderer, "示", tipPanelX + (tipPanelW - textRenderer.getWidth("示")) / 2, tipPanelY + 28, 0xFFFFAA);
+        g.drawString(font, "提", tipPanelX + (tipPanelW - font.width("提")) / 2, tipPanelY + 15, 0xFFFFAA);
+        g.drawString(font, "示", tipPanelX + (tipPanelW - font.width("示")) / 2, tipPanelY + 28, 0xFFFFAA);
 
         // 提示内容
         String[] tipLines;
@@ -257,7 +257,7 @@ public class ColorPaletteScreen extends Screen {
         for (String tipLine : tipLines) {
             if (tipY + 8 < tipPanelY + tipPanelH - 5) {
                 int lineColor = isSurvivalMode() ? 0xFF8888 : 0x88FF88;
-                g.drawString(textRenderer, tipLine, tipPanelX + (tipPanelW - textRenderer.getWidth(tipLine)) / 2, tipY, lineColor);
+                g.drawString(font, tipLine, tipPanelX + (tipPanelW - font.width(tipLine)) / 2, tipY, lineColor);
             }
             tipY += 12;
         }
