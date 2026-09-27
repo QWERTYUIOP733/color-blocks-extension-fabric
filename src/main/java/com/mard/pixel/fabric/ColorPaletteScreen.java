@@ -65,30 +65,33 @@ public class ColorPaletteScreen extends Screen {
     }
 
     private void initMainPage() {
-        // 大面板布局：左右分栏，左侧按钮，右侧说明
-        int panelX = 50;
-        int panelY = 80;
-        int panelW = width - 100;
-        int panelH = height - 160;
+        // 大面板布局参数
+        int panelX = 40;
+        int panelY = 70;
+        int panelW = width - 80;
+        int panelH = height - 130;
 
-        // 左侧按钮区
-        int leftAreaW = (int) (panelW * 0.45);
-        int btnW = Math.min(240, leftAreaW - 60);
-        int btnH = 32;
-        int btnX = panelX + (leftAreaW - btnW) / 2;
+        // 左侧按钮区：占面板左侧45%
+        int leftW = (int) (panelW * 0.45);
+        int btnW = Math.min(220, leftW - 50);
+        int btnH = 30;
+        int btnX = panelX + (leftW - btnW) / 2;
+
+        // 按钮垂直居中，间距60
         int btnCenterY = panelY + panelH / 2;
-        int gapY = 70;
+        int btn1Y = btnCenterY - 45;
+        int btn2Y = btnCenterY + 15;
 
         addRenderableWidget(Button.builder(Component.literal("颜色选取"), btn -> {
             currentPage = Page.SWATCHES;
             scrollOffset = 0;
             init();
-        }).bounds(btnX, btnCenterY - gapY / 2 - btnH / 2, btnW, btnH).build());
+        }).bounds(btnX, btn1Y, btnW, btnH).build());
 
         addRenderableWidget(Button.builder(Component.literal("输入想用的色号"), btn -> {
             currentPage = Page.INPUT;
             init();
-        }).bounds(btnX, btnCenterY + gapY / 2 - btnH / 2, btnW, btnH).build());
+        }).bounds(btnX, btn2Y, btnW, btnH).build());
     }
 
     private void initSwatchesPage() {
@@ -179,19 +182,19 @@ public class ColorPaletteScreen extends Screen {
 
     private void renderMainPage(GuiGraphics g) {
         // 大面板布局参数（与initMainPage一致）
-        int panelX = 50;
-        int panelY = 80;
-        int panelW = width - 100;
-        int panelH = height - 160;
+        int panelX = 40;
+        int panelY = 70;
+        int panelW = width - 80;
+        int panelH = height - 130;
 
-        // 标题（面板上方）
+        // 标题（面板上方居中）
         String title = "彩色方块扩展";
-        g.drawString(font, title, (width - font.width(title)) / 2, panelY - 35, 0xFFFFFF);
+        g.drawString(font, title, (width - font.width(title)) / 2, panelY - 28, 0xFFFFFF);
 
         // 当前模式（标题下方）
         String modeText = "当前模式：" + getGameModeName();
         int modeColor = isSurvivalMode() ? 0xFF5555 : 0x55FF55;
-        g.drawString(font, modeText, (width - font.width(modeText)) / 2, panelY - 18, modeColor);
+        g.drawString(font, modeText, (width - font.width(modeText)) / 2, panelY - 14, modeColor);
 
         // 大面板半透明背景
         g.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xCC1a1a1a);
@@ -207,16 +210,16 @@ public class ColorPaletteScreen extends Screen {
             int warnWidth = Math.min(font.width(warnText) + 24, panelW - 40);
             int warnX = panelX + (panelW - warnWidth) / 2;
             int warnY = panelY + 10;
-            g.fill(warnX, warnY, warnX + warnWidth, warnY + 20, 0x99CC0000);
-            g.fill(warnX + 1, warnY + 1, warnX + warnWidth - 1, warnY + 19, 0xFFFF4444);
-            g.drawString(font, warnText, warnX + (warnWidth - font.width(warnText)) / 2, warnY + 6, 0xFFFFFF);
+            g.fill(warnX, warnY, warnX + warnWidth, warnY + 18, 0x99CC0000);
+            g.fill(warnX + 1, warnY + 1, warnX + warnWidth - 1, warnY + 17, 0xFFFF4444);
+            g.drawString(font, warnText, warnX + (warnWidth - font.width(warnText)) / 2, warnY + 5, 0xFFFFFF);
         }
 
         // 右侧说明面板
         int infoPanelX = panelX + (int) (panelW * 0.50);
         int infoPanelW = (int) (panelW * 0.45);
-        int infoPanelY = panelY + 20;
-        int infoPanelH = panelH - 40;
+        int infoPanelY = panelY + 15;
+        int infoPanelH = panelH - 30;
 
         // 说明面板背景
         g.fill(infoPanelX, infoPanelY, infoPanelX + infoPanelW, infoPanelY + infoPanelH, 0xEE2a2a2a);
@@ -226,7 +229,7 @@ public class ColorPaletteScreen extends Screen {
         g.fill(infoPanelX, infoPanelY, infoPanelX + 1, infoPanelY + infoPanelH, 0xFF666666);
         g.fill(infoPanelX + infoPanelW - 1, infoPanelY, infoPanelX + infoPanelW, infoPanelY + infoPanelH, 0xFF444444);
 
-        g.drawString(font, "mod 使用说明", infoPanelX + 12, infoPanelY + 10, 0xFFFFAA);
+        g.drawString(font, "mod 使用说明", infoPanelX + 10, infoPanelY + 8, 0xFFFFAA);
 
         String[] lines = isSurvivalMode() ? new String[]{
             "", "221 色像素画模组（生存模式）", "",
@@ -242,18 +245,18 @@ public class ColorPaletteScreen extends Screen {
             "按 G 键打开/关闭本界面"
         };
 
-        int y = infoPanelY + 28;
-        int lineH = 12;
+        int y = infoPanelY + 24;
+        int lineH = 11;
         for (String line : lines) {
-            if (y + 10 < infoPanelY + infoPanelH - 5) {
-                g.drawString(font, line, infoPanelX + 12, y, 0xCCCCCC);
+            if (y + 10 < infoPanelY + infoPanelH - 3) {
+                g.drawString(font, line, infoPanelX + 10, y, 0xCCCCCC);
             }
             y += lineH;
         }
 
-        // 版本号（面板下方）
+        // 版本号（面板下方居中）
         String bottomText = "彩色方块扩展 v1.3.0";
-        g.drawString(font, bottomText, (width - font.width(bottomText)) / 2, panelY + panelH + 15, 0x888888);
+        g.drawString(font, bottomText, (width - font.width(bottomText)) / 2, panelY + panelH + 10, 0x888888);
 
         if (!statusMsg.isEmpty()) {
             g.drawString(font, statusMsg, 10, height - 14, 0xFFFFAA);
