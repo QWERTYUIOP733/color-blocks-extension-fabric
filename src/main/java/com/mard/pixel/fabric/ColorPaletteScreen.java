@@ -229,7 +229,7 @@ public class ColorPaletteScreen extends Screen {
         g.fill(infoPanelX, infoPanelY, infoPanelX + 1, infoPanelY + infoPanelH, 0xFF666666);
         g.fill(infoPanelX + infoPanelW - 1, infoPanelY, infoPanelX + infoPanelW, infoPanelY + infoPanelH, 0xFF444444);
 
-        g.drawString(font, "mod 使用说明", infoPanelX + 8, infoPanelY + 6, 0xFFFFAA);
+        g.drawString(font, "mod 使用说明", infoPanelX + 8, infoPanelY + 5, 0xFFFFAA);
 
         String[] lines = isSurvivalMode() ? new String[]{
             "", "221 色像素画模组（生存模式）", "",
@@ -245,10 +245,10 @@ public class ColorPaletteScreen extends Screen {
             "按 G 键打开/关闭本界面"
         };
 
-        int y = infoPanelY + 20;
-        int lineH = 9;
+        int y = infoPanelY + 18;
+        int lineH = 8;
         for (String line : lines) {
-            if (y + 9 < infoPanelY + infoPanelH - 2) {
+            if (y + 8 < infoPanelY + infoPanelH - 2) {
                 g.drawString(font, line, infoPanelX + 8, y, 0xCCCCCC);
             }
             y += lineH;
