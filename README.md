@@ -1,6 +1,6 @@
 # 彩色方块扩展 (Color Blocks Extension) - Fabric版
 
-适用于 Minecraft 26.3 + Fabric Loader 0.19.5 的彩色方块扩展模组。
+适用于 Minecraft 1.20.1 + Fabric Loader 0.15.11+ 的彩色方块扩展模组。
 
 ## 功能特性
 
@@ -24,8 +24,8 @@
 ## 构建
 
 ### 环境要求
-- Java 21+
-- Gradle 9.6+
+- Java 17+
+- Gradle 8.8+
 
 ### 构建命令
 ```bash
@@ -39,7 +39,7 @@
 
 ## 安装
 
-1. 安装 [Fabric Loader](https://fabricmc.net/use/) 0.19.5+
+1. 安装 [Fabric Loader](https://fabricmc.net/use/) 0.15.11+
 2. 安装 [Fabric API](https://modrinth.com/mod/fabric-api)
 3. 将模组jar文件放入 `.minecraft/mods/` 目录
 
@@ -47,9 +47,9 @@
 
 - **Mod ID**: `mard_pixel`
 - **版本**: 1.3.0
-- **Minecraft版本**: 26.3
-- **Fabric Loader**: 0.19.5+
-- **Java版本**: 21+
+- **Minecraft版本**: 1.20.1
+- **Fabric Loader**: 0.15.11+
+- **Java版本**: 17+
 
 ## 许可证
 
