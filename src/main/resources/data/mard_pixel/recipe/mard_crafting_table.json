@@ -1,18 +1,19 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": [
-    "P F",
-    "   ",
-    "F P"
-  ],
-  "key": {
-    "P": {
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
       "tag": "minecraft:planks"
     },
-    "F": {
+    {
+      "tag": "minecraft:planks"
+    },
+    {
+      "item": "minecraft:feather"
+    },
+    {
       "item": "minecraft:feather"
     }
-  },
+  ],
   "result": {
     "item": "mard_pixel:mard_crafting_table",
     "count": 1
