@@ -6,7 +6,8 @@
                     ],
     "result":  {
                    "count":  1,
-                   "item":  "mard_pixel:mard_pigment"
+                   "id": "mard_pixel:mard_pigment"
                },
     "type":  "minecraft:crafting_shapeless"
 }
+

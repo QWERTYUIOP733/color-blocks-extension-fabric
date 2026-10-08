@@ -8,9 +8,9 @@
     "QWERTYUIOP733"
   ],
   "contact": {
-    "homepage": "https://github.com/QWERTYUIOP733/-mod-",
-    "sources": "https://github.com/QWERTYUIOP733/-mod-",
-    "issues": "https://github.com/QWERTYUIOP733/-mod-/issues"
+    "homepage": "https://github.com/QWERTYUIOP733/color-blocks-extension-fabric",
+    "sources": "https://github.com/QWERTYUIOP733/color-blocks-extension-fabric",
+    "issues": "https://github.com/QWERTYUIOP733/color-blocks-extension-fabric/issues"
   },
   "license": "MIT",
   "icon": "assets/mard_pixel/icon.png",
@@ -24,9 +24,9 @@
     ]
   },
   "depends": {
-    "fabricloader": ">=0.15.11",
-    "minecraft": "~1.20.1",
-    "java": ">=17",
+    "fabricloader": ">=0.17.2",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
     "fabric-api": "*"
   },
   "suggests": {

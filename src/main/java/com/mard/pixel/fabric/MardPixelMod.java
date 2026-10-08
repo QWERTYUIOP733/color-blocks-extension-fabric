@@ -27,6 +27,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.Commands;
@@ -81,6 +82,12 @@ public class MardPixelMod implements ModInitializer {
         // 注册创造模式标签页（按系列分类）
         registerCreativeTabs();
 
+        // 注册网络包类型
+        PayloadTypeRegistry.playC2S().register(MardNetwork.RequestItemPayload.TYPE, MardNetwork.RequestItemPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(MardNetwork.HotbarPayload.TYPE, MardNetwork.HotbarPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(MardNetwork.CraftItemPayload.TYPE, MardNetwork.CraftItemPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(MardNetwork.SelectColorPayload.TYPE, MardNetwork.SelectColorPayload.CODEC);
+
         // 注册网络包（服务端接收）
         registerServerNetworking();
 
@@ -92,7 +99,7 @@ public class MardPixelMod implements ModInitializer {
     }
 
     public static ResourceLocation id(String path) {
-        return new ResourceLocation(MOD_ID, path);
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 
     // ==================== 创造模式标签页 ====================
@@ -150,31 +157,31 @@ public class MardPixelMod implements ModInitializer {
 
     private void registerServerNetworking() {
         // 客户端请求物品（UI点击获取）
-        ServerPlayNetworking.registerGlobalReceiver(MardNetwork.REQUEST_ITEM_ID,
-                (server, player, handler, buf, responseSender) -> {
-                    String target = MardNetwork.decodeString(buf);
-                    server.execute(() -> MardNetwork.handleRequestItem(player, target));
+        ServerPlayNetworking.registerGlobalReceiver(MardNetwork.RequestItemPayload.TYPE,
+                (payload, context) -> {
+                    String target = payload.target();
+                    context.player().server.execute(() -> MardNetwork.handleRequestItem(context.player(), target));
                 });
 
         // 输入色号放入快捷栏
-        ServerPlayNetworking.registerGlobalReceiver(MardNetwork.HOTBAR_ID,
-                (server, player, handler, buf, responseSender) -> {
-                    String code = MardNetwork.decodeString(buf);
-                    server.execute(() -> MardNetwork.handleHotbar(player, code));
+        ServerPlayNetworking.registerGlobalReceiver(MardNetwork.HotbarPayload.TYPE,
+                (payload, context) -> {
+                    String code = payload.code();
+                    context.player().server.execute(() -> MardNetwork.handleHotbar(context.player(), code));
                 });
 
         // 使用七彩粉末合成
-        ServerPlayNetworking.registerGlobalReceiver(MardNetwork.CRAFT_ITEM_ID,
-                (server, player, handler, buf, responseSender) -> {
-                    String code = MardNetwork.decodeString(buf);
-                    server.execute(() -> MardNetwork.handleCraftItem(player, code));
+        ServerPlayNetworking.registerGlobalReceiver(MardNetwork.CraftItemPayload.TYPE,
+                (payload, context) -> {
+                    String code = payload.code();
+                    context.player().server.execute(() -> MardNetwork.handleCraftItem(context.player(), code));
                 });
 
         // 合成台选择颜色
-        ServerPlayNetworking.registerGlobalReceiver(MardNetwork.SELECT_COLOR_ID,
-                (server, player, handler, buf, responseSender) -> {
-                    String code = MardNetwork.decodeString(buf);
-                    server.execute(() -> MardNetwork.handleSelectColor(player, code));
+        ServerPlayNetworking.registerGlobalReceiver(MardNetwork.SelectColorPayload.TYPE,
+                (payload, context) -> {
+                    String code = payload.code();
+                    context.player().server.execute(() -> MardNetwork.handleSelectColor(context.player(), code));
                 });
     }
 

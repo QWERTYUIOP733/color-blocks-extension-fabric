@@ -54,8 +54,8 @@ public class MardPixelClient implements ClientModInitializer {
         // 注册颜色提供者（方块和物品）
         registerColorProviders();
 
-        // 注册GUI
-        net.fabricmc.fabric.api.client.screenhandler.v1.ScreenRegistry.register(
+        // 注册GUI - 使用原版MenuScreens注册
+        net.minecraft.client.gui.screens.MenuScreens.register(
                 ModScreenHandlers.MARD_CRAFTING_TABLE,
                 MardCraftingScreen::new);
 
@@ -75,7 +75,7 @@ public class MardPixelClient implements ClientModInitializer {
         });
 
         // 注册Tooltip清理（移除JEI等模组添加的额外信息，只保留色号+RGB）
-        ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
+        ItemTooltipCallback.EVENT.register((stack, context, type, lines) -> {
             if (stack.getItem() instanceof MardBlockItem) {
                 // 从后往前移除，只保留第一行（名称）和包含RGB的行
                 for (int i = lines.size() - 1; i >= 1; i--) {
@@ -120,35 +120,27 @@ public class MardPixelClient implements ClientModInitializer {
      * 发送请求物品包（UI点击获取）
      */
     public static void sendRequestItem(String target) {
-        FriendlyByteBuf buf = new FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
-        MardNetwork.encodeString(buf, target);
-        ClientPlayNetworking.send(MardNetwork.REQUEST_ITEM_ID, buf);
+        ClientPlayNetworking.send(new MardNetwork.RequestItemPayload(target));
     }
 
     /**
      * 发送快捷栏包（输入色号放入快捷栏）
      */
     public static void sendHotbar(String code) {
-        FriendlyByteBuf buf = new FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
-        MardNetwork.encodeString(buf, code);
-        ClientPlayNetworking.send(MardNetwork.HOTBAR_ID, buf);
+        ClientPlayNetworking.send(new MardNetwork.HotbarPayload(code));
     }
 
     /**
      * 发送七彩粉末合成包
      */
     public static void sendCraftItem(String code) {
-        FriendlyByteBuf buf = new FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
-        MardNetwork.encodeString(buf, code);
-        ClientPlayNetworking.send(MardNetwork.CRAFT_ITEM_ID, buf);
+        ClientPlayNetworking.send(new MardNetwork.CraftItemPayload(code));
     }
 
     /**
      * 发送合成台选择颜色包
      */
     public static void sendSelectColor(String code) {
-        FriendlyByteBuf buf = new FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
-        MardNetwork.encodeString(buf, code);
-        ClientPlayNetworking.send(MardNetwork.SELECT_COLOR_ID, buf);
+        ClientPlayNetworking.send(new MardNetwork.SelectColorPayload(code));
     }
 }

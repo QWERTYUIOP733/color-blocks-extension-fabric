@@ -24,11 +24,13 @@
 package com.mard.pixel.fabric;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Fabric网络包管理
+ * Fabric网络包管理（1.21 CustomPacketPayload版本）
  * 4种网络包：
  * 1. C2S_REQUEST_ITEM - 客户端请求物品（UI点击获取）
  * 2. C2S_HOTBAR - 输入色号放入快捷栏
@@ -36,27 +38,89 @@ import net.minecraft.server.level.ServerPlayer;
  * 4. C2S_SELECT_COLOR - 合成台选择颜色
  */
 public final class MardNetwork {
-    public static final ResourceLocation REQUEST_ITEM_ID = new ResourceLocation(MardPixelMod.MOD_ID, "request_item");
-    public static final ResourceLocation HOTBAR_ID = new ResourceLocation(MardPixelMod.MOD_ID, "hotbar");
-    public static final ResourceLocation CRAFT_ITEM_ID = new ResourceLocation(MardPixelMod.MOD_ID, "craft_item");
-    public static final ResourceLocation SELECT_COLOR_ID = new ResourceLocation(MardPixelMod.MOD_ID, "select_color");
+
+    // ==================== 网络包定义 ====================
+
+    /**
+     * 请求物品包
+     */
+    public record RequestItemPayload(String target) implements CustomPacketPayload {
+        public static final Type<RequestItemPayload> TYPE =
+                new Type<>(ResourceLocation.fromNamespaceAndPath(MardPixelMod.MOD_ID, "request_item"));
+
+        public static final StreamCodec<FriendlyByteBuf, RequestItemPayload> CODEC =
+                StreamCodec.of(
+                        (buf, payload) -> buf.writeUtf(payload.target()),
+                        buf -> new RequestItemPayload(buf.readUtf())
+                );
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * 快捷栏包
+     */
+    public record HotbarPayload(String code) implements CustomPacketPayload {
+        public static final Type<HotbarPayload> TYPE =
+                new Type<>(ResourceLocation.fromNamespaceAndPath(MardPixelMod.MOD_ID, "hotbar"));
+
+        public static final StreamCodec<FriendlyByteBuf, HotbarPayload> CODEC =
+                StreamCodec.of(
+                        (buf, payload) -> buf.writeUtf(payload.code()),
+                        buf -> new HotbarPayload(buf.readUtf())
+                );
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * 七彩粉末合成包
+     */
+    public record CraftItemPayload(String code) implements CustomPacketPayload {
+        public static final Type<CraftItemPayload> TYPE =
+                new Type<>(ResourceLocation.fromNamespaceAndPath(MardPixelMod.MOD_ID, "craft_item"));
+
+        public static final StreamCodec<FriendlyByteBuf, CraftItemPayload> CODEC =
+                StreamCodec.of(
+                        (buf, payload) -> buf.writeUtf(payload.code()),
+                        buf -> new CraftItemPayload(buf.readUtf())
+                );
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * 合成台选择颜色包
+     */
+    public record SelectColorPayload(String code) implements CustomPacketPayload {
+        public static final Type<SelectColorPayload> TYPE =
+                new Type<>(ResourceLocation.fromNamespaceAndPath(MardPixelMod.MOD_ID, "select_color"));
+
+        public static final StreamCodec<FriendlyByteBuf, SelectColorPayload> CODEC =
+                StreamCodec.of(
+                        (buf, payload) -> buf.writeUtf(payload.code()),
+                        buf -> new SelectColorPayload(buf.readUtf())
+                );
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    // ==================== 初始化 ====================
 
     public static void init() {
-        // 服务端接收包注册在MardPixelMod中
-    }
-
-    // ==================== 编码/解码 ====================
-
-    public static void encodeString(FriendlyByteBuf buf, String value) {
-        buf.writeUtf(value != null ? value : "");
-    }
-
-    public static String decodeString(FriendlyByteBuf buf) {
-        try {
-            return buf.readUtf();
-        } catch (Exception e) {
-            return "";
-        }
+        // 注册在MardPixelMod中
     }
 
     // ==================== 服务端处理 ====================

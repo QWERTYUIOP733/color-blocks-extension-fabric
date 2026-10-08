@@ -1,4 +1,4 @@
-{
+﻿{
   "type": "minecraft:crafting_shapeless",
   "ingredients": [
     {
@@ -15,7 +15,8 @@
     }
   ],
   "result": {
-    "item": "mard_pixel:mard_crafting_table",
+    "id": "mard_pixel:mard_crafting_table",
     "count": 1
   }
 }
+

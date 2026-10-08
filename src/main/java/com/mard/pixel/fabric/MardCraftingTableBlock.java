@@ -23,6 +23,7 @@
 
 package com.mard.pixel.fabric;
 
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -42,6 +43,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class MardCraftingTableBlock extends BaseEntityBlock {
 
+    public static final MapCodec<MardCraftingTableBlock> CODEC = simpleCodec(properties -> new MardCraftingTableBlock());
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
+    }
+
     public MardCraftingTableBlock() {
         super(Properties.of()
                 .strength(2.5f)
@@ -49,8 +57,8 @@ public class MardCraftingTableBlock extends BaseEntityBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos,
-                                  Player player, InteractionHand hand, BlockHitResult hit) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
+                                  Player player, BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             serverPlayer.openMenu(state.getMenuProvider(level, pos));
         }
