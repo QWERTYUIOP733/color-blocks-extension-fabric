@@ -25,6 +25,8 @@ package com.mard.pixel.fabric;
 
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Item.Properties;
@@ -52,11 +54,12 @@ public class ModItems {
     public static void init() {
         // 注册七彩粉末
         MARD_PIGMENT = registerItem("mard_pigment",
-                new Item(new Properties()));
+                new Item(new Properties().setId(itemKey("mard_pigment"))));
 
         // 注册方块染色台物品
         MARD_CRAFTING_TABLE = registerItem("mard_crafting_table",
-                new BlockItem(ModBlocks.MARD_CRAFTING_TABLE, new Properties()));
+                new BlockItem(ModBlocks.MARD_CRAFTING_TABLE,
+                        new Properties().setId(itemKey("mard_crafting_table")).useBlockDescriptionPrefix()));
 
         // 注册所有颜色方块的物品形式（使用MardBlockItem两行显示）
         for (ColorDefinition color : ColorRegistry.getAllColors()) {
@@ -69,10 +72,15 @@ public class ModItems {
                 COLOR_BLOCK_ITEMS.size());
     }
 
+    private static ResourceKey<Item> itemKey(String id) {
+        return ResourceKey.create(Registries.ITEM, MardPixelMod.id(id));
+    }
+
     private static MardBlockItem registerColorBlockItem(ColorDefinition color) {
         String itemId = "color_block_" + color.getCode().toLowerCase();
         Block block = ModBlocks.getBlockByColorCode(color.getCode());
-        MardBlockItem blockItem = new MardBlockItem(block, color.getCode(), color.getColorValue(), new Properties());
+        MardBlockItem blockItem = new MardBlockItem(block, color.getCode(), color.getColorValue(),
+                new Properties().setId(itemKey(itemId)));
         return registerItem(itemId, blockItem);
     }
 

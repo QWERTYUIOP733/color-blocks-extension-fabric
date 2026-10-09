@@ -43,17 +43,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public class MardCraftingTableBlock extends BaseEntityBlock {
 
-    public static final MapCodec<MardCraftingTableBlock> CODEC = simpleCodec(properties -> new MardCraftingTableBlock());
+    public static final MapCodec<MardCraftingTableBlock> CODEC = simpleCodec(MardCraftingTableBlock::new);
 
     @Override
     protected MapCodec<? extends BaseEntityBlock> codec() {
         return CODEC;
     }
 
-    public MardCraftingTableBlock() {
-        super(Properties.of()
-                .strength(2.5f)
-                .requiresCorrectToolForDrops());
+    public MardCraftingTableBlock(Properties properties) {
+        super(properties);
     }
 
     @Override
@@ -62,7 +60,7 @@ public class MardCraftingTableBlock extends BaseEntityBlock {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             serverPlayer.openMenu(state.getMenuProvider(level, pos));
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.CONSUME;
     }
 
     @Nullable

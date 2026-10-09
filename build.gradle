@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.7-SNAPSHOT'
+    id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
     id 'maven-publish'
 }
 
@@ -8,6 +8,10 @@ group = project.maven_group
 
 base {
     archivesName = project.archives_base_name
+}
+
+loom {
+    accessWidenerPath = file("src/main/resources/mard_pixel.accesswidener")
 }
 
 repositories {

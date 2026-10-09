@@ -25,7 +25,10 @@ package com.mard.pixel.fabric;
 
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,7 +50,10 @@ public class ModBlocks {
     public static void init() {
         // 注册方块染色台
         MARD_CRAFTING_TABLE = registerBlock("mard_crafting_table",
-                new MardCraftingTableBlock());
+                new MardCraftingTableBlock(BlockBehaviour.Properties.of()
+                        .setId(ResourceKey.create(Registries.BLOCK, MardPixelMod.id("mard_crafting_table")))
+                        .strength(2.5f)
+                        .requiresCorrectToolForDrops()));
 
         // 注册所有颜色方块（使用MardBlock）
         for (ColorDefinition color : ColorRegistry.getAllColors()) {
@@ -62,7 +68,8 @@ public class ModBlocks {
 
     private static MardBlock registerColorBlock(ColorDefinition color) {
         String blockId = "color_block_" + color.getCode().toLowerCase();
-        MardBlock block = new MardBlock(color.getCode(), color.getColorValue());
+        ResourceKey<Block> key = ResourceKey.create(Registries.BLOCK, MardPixelMod.id(blockId));
+        MardBlock block = new MardBlock(key, color.getCode(), color.getColorValue());
         return registerBlock(blockId, block);
     }
 

@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "mard_pixel:item/color_block_b18",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -1642935
+      }
+    ]
+  }
+}

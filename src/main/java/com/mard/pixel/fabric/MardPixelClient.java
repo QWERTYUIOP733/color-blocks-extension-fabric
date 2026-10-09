@@ -103,15 +103,8 @@ public class MardPixelClient implements ClientModInitializer {
             return 0xFFFFFF;
         }, ModBlocks.COLOR_BLOCKS.toArray(new net.minecraft.world.level.block.Block[0]));
 
-        // 物品颜色提供者
-        for (MardBlockItem item : ModItems.COLOR_BLOCK_ITEMS) {
-            ColorProviderRegistry.ITEM.register((stack, tintIndex) -> {
-                if (tintIndex == 0 && stack.getItem() instanceof MardBlockItem mbi) {
-                    return mbi.getRgb();
-                }
-                return 0xFFFFFF;
-            }, item);
-        }
+        // 1.21.4 起物品颜色改为 data-driven：见 assets/mard_pixel/items/*.json 的 constant tint，
+        // 不再使用 ColorProviderRegistry.ITEM（该 API 已移除）。
     }
 
     // ==================== 网络包发送方法 ====================

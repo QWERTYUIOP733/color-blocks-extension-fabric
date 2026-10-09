@@ -1,0 +1,7 @@
+classTweaker v1 named
+
+# 1.21.4 移除了 BlockEntityType.Builder，构造器变为 private。
+# 开放构造器以便直接 new BlockEntityType<>(factory, Set.of(validBlock))。
+accessible class net/minecraft/world/level/block/entity/BlockEntityType
+accessible class net/minecraft/world/level/block/entity/BlockEntityType$BlockEntitySupplier
+accessible method net/minecraft/world/level/block/entity/BlockEntityType <init> (Lnet/minecraft/world/level/block/entity/BlockEntityType$BlockEntitySupplier;Ljava/util/Set;)V

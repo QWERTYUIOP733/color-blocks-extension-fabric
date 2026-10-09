@@ -27,6 +27,8 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
+import java.util.Set;
+
 /**
  * 方块实体注册类
  */
@@ -37,8 +39,8 @@ public class ModBlockEntities {
         MARD_CRAFTING_TABLE = Registry.register(
                 BuiltInRegistries.BLOCK_ENTITY_TYPE,
                 MardPixelMod.id("mard_crafting_table"),
-                BlockEntityType.Builder.of(MardCraftingTableBlockEntity::new,
-                        ModBlocks.MARD_CRAFTING_TABLE).build(null));
+                new BlockEntityType<>(MardCraftingTableBlockEntity::new,
+                        Set.of(ModBlocks.MARD_CRAFTING_TABLE)));
 
         MardPixelMod.LOGGER.info("Registered block entities");
     }

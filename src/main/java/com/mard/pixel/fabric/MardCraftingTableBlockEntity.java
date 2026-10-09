@@ -196,8 +196,11 @@ public class MardCraftingTableBlockEntity extends BlockEntity implements Contain
         net.minecraft.world.item.crafting.CraftingInput craftingInput =
                 net.minecraft.world.item.crafting.CraftingInput.of(3, 3, gridItems);
 
-        Optional<net.minecraft.world.item.crafting.RecipeHolder<CraftingRecipe>> recipe = level.getRecipeManager()
-                .getRecipeFor(RecipeType.CRAFTING, craftingInput, level);
+        Optional<net.minecraft.world.item.crafting.RecipeHolder<CraftingRecipe>> recipe = Optional.empty();
+        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel
+                && serverLevel.recipeAccess() instanceof net.minecraft.world.item.crafting.RecipeManager recipeManager) {
+            recipe = recipeManager.getRecipeFor(RecipeType.CRAFTING, craftingInput, serverLevel);
+        }
 
         if (recipe.isPresent()) {
             ItemStack result = recipe.get().value().assemble(craftingInput, level.registryAccess());
