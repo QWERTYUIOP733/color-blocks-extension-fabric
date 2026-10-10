@@ -1,6 +1,9 @@
 pluginManagement {
     repositories {
-        maven { url = 'https://maven.fabricmc.net/' }
+        // 本地 Fabric Maven 镜像（由 gradle-home 缓存的 net.fabricmc* 构件重组，离线/弱网可用，优先命中）
+        maven { url = uri('file:///D:/dev/fabric-maven-mirror') }
+        maven { url = 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url = 'https://maven.aliyun.com/repository/public' }
         mavenCentral()
         gradlePluginPortal()
     }

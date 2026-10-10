@@ -23,12 +23,12 @@
 
 package com.mard.pixel.fabric;
 
-import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.RenderShape;
@@ -43,12 +43,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class MardCraftingTableBlock extends BaseEntityBlock {
 
-    public static final MapCodec<MardCraftingTableBlock> CODEC = simpleCodec(MardCraftingTableBlock::new);
-
-    @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
-    }
+    // 26.3 起 Block 的 CODEC / block_type 注册表已整体移除，不再覆写 codec()；
+    // onRemove(...) 也已移除，破坏掉落改走 playerDestroy(...)。
 
     public MardCraftingTableBlock(Properties properties) {
         super(properties);
@@ -57,10 +53,10 @@ public class MardCraftingTableBlock extends BaseEntityBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                   Player player, BlockHitResult hit) {
-        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
             serverPlayer.openMenu(state.getMenuProvider(level, pos));
         }
-        return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.CONSUME;
+        return level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.CONSUME;
     }
 
     @Nullable
@@ -75,13 +71,11 @@ public class MardCraftingTableBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moved) {
-        if (state.getBlock() != newState.getBlock()) {
-            BlockEntity blockEntity = level.getBlockEntity(pos);
-            if (blockEntity instanceof MardCraftingTableBlockEntity craftingTable) {
-                craftingTable.dropContents();
-            }
-            super.onRemove(state, level, pos, newState, moved);
+    public void playerDestroy(ServerLevel level, ServerPlayer player, BlockPos pos, BlockState state,
+                              @Nullable BlockEntity blockEntity, ItemStack tool) {
+        if (blockEntity instanceof MardCraftingTableBlockEntity craftingTable) {
+            craftingTable.dropContents();
         }
+        super.playerDestroy(level, player, pos, state, blockEntity, tool);
     }
 }

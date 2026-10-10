@@ -23,8 +23,9 @@
 
 package com.mard.pixel.fabric;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -35,6 +36,10 @@ import java.util.List;
  * 方块染色台GUI界面
  * 布局与原版工作台一致，左侧添加颜色选择列表（仅七彩粉末模式）
  * 颜色面板固定放在主界面左侧，避免与右侧JEI物品管理器冲突
+ *
+ * 26.3 渲染管线迁移：AbstractContainerScreen 不再有 renderBg；
+ * 背景面板与左侧颜色面板统一在 extractBackground（矩阵平移到容器原点之前，绝对坐标）绘制，
+ * slots/labels 由父类在平移后自动绘制；tooltip 改走 extractTooltip + setTooltipForNextFrame。
  */
 public class MardCraftingScreen extends AbstractContainerScreen<MardCraftingScreenHandler> {
 
@@ -57,9 +62,8 @@ public class MardCraftingScreen extends AbstractContainerScreen<MardCraftingScre
     private String selectedColor = "";
 
     public MardCraftingScreen(MardCraftingScreenHandler handler, Inventory playerInventory, Component title) {
-        super(handler, playerInventory, title);
-        this.imageWidth = BASE_WIDTH;
-        this.imageHeight = BASE_HEIGHT;
+        // 26.3：imageWidth/imageHeight 为 protected final，改用 5 参构造器传入
+        super(handler, playerInventory, title, BASE_WIDTH, BASE_HEIGHT);
     }
 
     @Override
@@ -81,19 +85,19 @@ public class MardCraftingScreen extends AbstractContainerScreen<MardCraftingScre
         scrollOffset = Math.min(scrollOffset, maxOffset);
     }
 
-    @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(graphics, mouseX, mouseY, partialTick);
-        super.render(graphics, mouseX, mouseY, partialTick);
-        this.renderTooltip(graphics, mouseX, mouseY);
+    // ==================== 背景（在 slots 之前绘制，绝对坐标） ====================
 
+    @Override
+    public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+        super.extractBackground(g, mouseX, mouseY, partialTick);
+        drawWorkbenchPanel(g);
         if (menu.hasPigment()) {
-            renderColorPanel(graphics, mouseX, mouseY);
+            renderColorPanel(g);
         }
     }
 
-    @Override
-    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
+    /** 原 renderBg：工作台主面板 + 槽位底纹 + 箭头（绝对坐标 leftPos/topPos） */
+    private void drawWorkbenchPanel(GuiGraphicsExtractor graphics) {
         int x = this.leftPos;
         int y = this.topPos;
 
@@ -139,7 +143,7 @@ public class MardCraftingScreen extends AbstractContainerScreen<MardCraftingScre
         }
     }
 
-    private void drawSlotBackground(GuiGraphics graphics, int x, int y) {
+    private void drawSlotBackground(GuiGraphicsExtractor graphics, int x, int y) {
         int size = MardCraftingScreenHandler.SLOT_SIZE;
         graphics.fill(x + 1, y + 1, x + size - 1, y + size - 1, 0xFF8B8B8B);
         graphics.fill(x, y, x + size, y + 1, 0xFFFFFFFF);
@@ -148,7 +152,7 @@ public class MardCraftingScreen extends AbstractContainerScreen<MardCraftingScre
         graphics.fill(x + size - 1, y, x + size, y + size, 0xFF373737);
     }
 
-    private void renderColorPanel(GuiGraphics graphics, int mouseX, int mouseY) {
+    private void renderColorPanel(GuiGraphicsExtractor graphics) {
         updatePanelWidth();
 
         int panelX = this.leftPos - panelWidth - COLOR_PANEL_GAP;
@@ -164,7 +168,7 @@ public class MardCraftingScreen extends AbstractContainerScreen<MardCraftingScre
 
         // 标题栏
         graphics.fill(panelX + 1, panelY + 1, panelX + panelWidth - 1, panelY + 14, 0xFF8B8B8B);
-        graphics.drawString(this.font, "选择颜色", panelX + 4, panelY + 4, 0xFFFFFFFF, false);
+        graphics.text(this.font, "选择颜色", panelX + 4, panelY + 4, 0xFFFFFFFF, false);
 
         List<ColorDefinition> allColors = ColorRegistry.getAllColors();
         int totalColors = allColors.size();
@@ -190,9 +194,9 @@ public class MardCraftingScreen extends AbstractContainerScreen<MardCraftingScre
 
             // 文字
             int textX = swatchX + COLOR_SWATCH_SIZE + COLOR_TEXT_PADDING;
-            graphics.drawString(this.font, color.getCode(), textX, itemY + 3, 0x404040, false);
+            graphics.text(this.font, color.getCode(), textX, itemY + 3, 0xFF404040, false);
             String rgbText = String.format("RGB:%d,%d,%d", color.getRed(), color.getGreen(), color.getBlue());
-            graphics.drawString(this.font, rgbText, textX, itemY + 13, 0x606060, false);
+            graphics.text(this.font, rgbText, textX, itemY + 13, 0xFF606060, false);
         }
 
         // 滚动条
@@ -235,8 +239,10 @@ public class MardCraftingScreen extends AbstractContainerScreen<MardCraftingScre
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (menu.hasPigment() && button == 0) {
+    public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
+        double mouseX = e.x(), mouseY = e.y();
+        int button = e.button();
+        if (menu.hasPigment() && button == 1) { // 26.3 SDL3 左键=1（旧 GLFW 为 0）
             int[] bounds = getColorPanelBounds();
             int panelX = bounds[0];
             int panelY = bounds[1];
@@ -257,12 +263,14 @@ public class MardCraftingScreen extends AbstractContainerScreen<MardCraftingScre
                 }
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(e, doubleClick);
     }
 
+    // ==================== Tooltip（颜色面板色块） ====================
+
     @Override
-    protected void renderTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
-        super.renderTooltip(graphics, mouseX, mouseY);
+    protected void extractTooltip(GuiGraphicsExtractor g, int mouseX, int mouseY) {
+        super.extractTooltip(g, mouseX, mouseY);
 
         if (menu.hasPigment()) {
             int[] bounds = getColorPanelBounds();
@@ -281,7 +289,7 @@ public class MardCraftingScreen extends AbstractContainerScreen<MardCraftingScre
                     ColorDefinition color = allColors.get(colorIndex);
                     ItemStack stack = new ItemStack(ModItems.getItemByColorCode(color.getCode()));
                     if (!stack.isEmpty()) {
-                        graphics.renderTooltip(this.font, stack, mouseX, mouseY);
+                        g.setTooltipForNextFrame(this.font, stack, mouseX, mouseY);
                     }
                 }
             }

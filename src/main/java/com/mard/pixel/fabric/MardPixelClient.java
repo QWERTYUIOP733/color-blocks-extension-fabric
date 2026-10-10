@@ -24,19 +24,14 @@
 package com.mard.pixel.fabric;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.BlockColorRegistry;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import org.lwjgl.glfw.GLFW;
+import net.minecraft.client.color.block.BlockTintSource;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.List;
 
@@ -51,7 +46,7 @@ public class MardPixelClient implements ClientModInitializer {
     public void onInitializeClient() {
         MardPixelMod.LOGGER.info("Initializing Color Blocks Extension client...");
 
-        // 注册颜色提供者（方块和物品）
+        // 注册颜色提供者（方块；物品色自 1.21.4 起 data-driven）
         registerColorProviders();
 
         // 注册GUI - 使用原版MenuScreens注册
@@ -60,16 +55,16 @@ public class MardPixelClient implements ClientModInitializer {
                 MardCraftingScreen::new);
 
         // 注册快捷键（G键打开色板）
-        keyOpenPalette = KeyBindingHelper.registerKeyBinding(new net.minecraft.client.KeyMapping(
+        keyOpenPalette = KeyMappingHelper.registerKeyMapping(new net.minecraft.client.KeyMapping(
                 "key.mard_pixel.open_palette",
-                GLFW.GLFW_KEY_G,
-                "category.mard_pixel"));
+                InputConstants.KEY_G,
+                net.minecraft.client.KeyMapping.Category.MISC));
 
         // 注册快捷键事件
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (keyOpenPalette.consumeClick()) {
-                if (client.player != null && client.screen == null) {
-                    client.setScreen(new ColorPaletteScreen());
+                if (client.player != null && client.gui.screen() == null) {
+                    client.setScreenAndShow(new ColorPaletteScreen());
                 }
             }
         });
@@ -91,20 +86,18 @@ public class MardPixelClient implements ClientModInitializer {
     }
 
     /**
-     * 注册方块和物品的颜色提供者
-     * 所有颜色方块使用tintindex=0进行程序染色
+     * 注册方块颜色提供者
+     * 所有颜色方块六面使用 tintindex=0，按方块自身存储的 RGB 程序染色。
+     * 26.3 起 fabric-api 用 BlockColorRegistry.register(List<BlockTintSource>, Block...)，
+     * 列表下标即 tintindex；本模组仅用 tintindex=0，故只提供一个 BlockTintSource。
      */
     private void registerColorProviders() {
-        // 方块颜色提供者
-        ColorProviderRegistry.BLOCK.register((state, world, pos, tintIndex) -> {
-            if (tintIndex == 0 && state.getBlock() instanceof MardBlock mardBlock) {
-                return mardBlock.getRgb();
-            }
-            return 0xFFFFFF;
-        }, ModBlocks.COLOR_BLOCKS.toArray(new net.minecraft.world.level.block.Block[0]));
+        BlockColorRegistry.register(
+                List.<BlockTintSource>of(state ->
+                        state.getBlock() instanceof MardBlock mardBlock ? mardBlock.getRgb() : 0xFFFFFF),
+                ModBlocks.COLOR_BLOCKS.toArray(new net.minecraft.world.level.block.Block[0]));
 
-        // 1.21.4 起物品颜色改为 data-driven：见 assets/mard_pixel/items/*.json 的 constant tint，
-        // 不再使用 ColorProviderRegistry.ITEM（该 API 已移除）。
+        // 物品颜色自 1.21.4 起改为 data-driven：见 assets/mard_pixel/items/*.json 的 constant tint。
     }
 
     // ==================== 网络包发送方法 ====================

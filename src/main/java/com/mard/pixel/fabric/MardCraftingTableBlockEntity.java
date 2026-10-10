@@ -25,7 +25,6 @@ package com.mard.pixel.fabric;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
@@ -38,6 +37,8 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Optional;
@@ -69,7 +70,7 @@ public class MardCraftingTableBlockEntity extends BlockEntity implements Contain
      */
     public void selectColor(String code) {
         this.selectedColor = code != null ? code : "";
-        if (level != null && !level.isClientSide) {
+        if (level != null && !level.isClientSide()) {
             updateCraftingResult();
             setChanged();
         }
@@ -123,7 +124,7 @@ public class MardCraftingTableBlockEntity extends BlockEntity implements Contain
         if (slot >= 0 && slot < TOTAL_SLOTS) {
             ItemStack stack = inventory.get(slot);
             ItemStack result = stack.split(amount);
-            if (slot < GRID_SIZE && level != null && !level.isClientSide) {
+            if (slot < GRID_SIZE && level != null && !level.isClientSide()) {
                 updateCraftingResult();
             }
             setChanged();
@@ -147,7 +148,7 @@ public class MardCraftingTableBlockEntity extends BlockEntity implements Contain
     public void setItem(int slot, ItemStack stack) {
         if (slot >= 0 && slot < TOTAL_SLOTS) {
             inventory.set(slot, stack);
-            if (slot < GRID_SIZE && level != null && !level.isClientSide) {
+            if (slot < GRID_SIZE && level != null && !level.isClientSide()) {
                 updateCraftingResult();
             }
             setChanged();
@@ -176,7 +177,7 @@ public class MardCraftingTableBlockEntity extends BlockEntity implements Contain
      * 否则使用原版配方系统，只允许模组内物品
      */
     private void updateCraftingResult() {
-        if (level == null || level.isClientSide) return;
+        if (level == null || level.isClientSide()) return;
 
         // 七彩粉末颜色选择模式
         if (hasPigment() && !selectedColor.isEmpty()) {
@@ -203,7 +204,7 @@ public class MardCraftingTableBlockEntity extends BlockEntity implements Contain
         }
 
         if (recipe.isPresent()) {
-            ItemStack result = recipe.get().value().assemble(craftingInput, level.registryAccess());
+            ItemStack result = recipe.get().value().assemble(craftingInput);
             if (isMardPixelItem(result)) {
                 inventory.set(RESULT_SLOT, result);
             } else {
@@ -245,25 +246,25 @@ public class MardCraftingTableBlockEntity extends BlockEntity implements Contain
             }
         }
         inventory.set(RESULT_SLOT, ItemStack.EMPTY);
-        if (level != null && !level.isClientSide) {
+        if (level != null && !level.isClientSide()) {
             updateCraftingResult();
         }
     }
 
-    // ==================== 序列化 ====================
+    // ==================== 序列化（26.3 ValueOutput / ValueInput） ====================
 
     @Override
-    protected void saveAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
-        super.saveAdditional(tag, provider);
-        ContainerHelper.saveAllItems(tag, inventory, provider);
-        tag.putString("SelectedColor", selectedColor);
+    protected void saveAdditional(ValueOutput out) {
+        super.saveAdditional(out);
+        ContainerHelper.saveAllItems(out, inventory);
+        out.putString("SelectedColor", selectedColor);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
-        super.loadAdditional(tag, provider);
-        ContainerHelper.loadAllItems(tag, inventory, provider);
-        selectedColor = tag.getString("SelectedColor");
+    protected void loadAdditional(ValueInput in) {
+        super.loadAdditional(in);
+        ContainerHelper.loadAllItems(in, inventory);
+        selectedColor = in.getStringOr("SelectedColor", "");
     }
 
     @Override
@@ -280,7 +281,7 @@ public class MardCraftingTableBlockEntity extends BlockEntity implements Contain
      * 掉落所有物品（方块被破坏时调用）
      */
     public void dropContents() {
-        if (level == null || level.isClientSide) return;
+        if (level == null || level.isClientSide()) return;
         for (int i = 0; i < TOTAL_SLOTS; i++) {
             ItemStack stack = inventory.get(i);
             if (!stack.isEmpty()) {

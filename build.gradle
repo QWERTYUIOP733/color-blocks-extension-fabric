@@ -1,7 +1,12 @@
 plugins {
-    id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
     id 'maven-publish'
 }
+
+// Loom 内部（intermediary、fabric-api 版本校验、experimental 清单等）用自有 HTTP 下载器访问 Fabric Maven，
+// 该地址在本机被墙（Cloudflare TLS 挂起）。通过 Loom MirrorUtil 的 ext 属性重定向到本机镜像 HTTP 服务。
+// 服务由 D:\dev\fabric-maven-mirror-server.ps1 提供（http://127.0.0.1:8910/，根为本地 file 镜像）。
+ext.loom_fabric_repository = 'http://127.0.0.1:8910/'
 
 version = project.mod_version
 group = project.maven_group
@@ -15,16 +20,24 @@ loom {
 }
 
 repositories {
+    // 本地 Fabric Maven 镜像优先（loader / fabric-api / intermediary 等 net.fabricmc 构件），避免直连 fabricmc 超时
+    maven { url = uri('file:///D:/dev/fabric-maven-mirror') }
+    maven { url = 'https://maven.aliyun.com/repository/public' }
     mavenCentral()
 }
 
 dependencies {
+    // Minecraft 26.1+ ships unobfuscated: Loom 以 NoRemap（net.fabricmc.fabric-loom）模式运行，
+    // 不注册 modImplementation/modApi 等 mod* configuration，mod 依赖统一用标准 configuration。
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    // Fabric API 是 JIJ bundle；NoRemap 模式由 Loom 的 artifact transform 自动展开 META-INF/jars 嵌套 jar
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 }
 
+// 与 1.21.4 蓝本一致：Fabric 工程使用自带的 src/main/java 与 src/main/resources 完整副本
+// （Fabric 端读 colors.json、不依赖 shared 的 common 类；shared 仅作跨加载器母版，不参与本工程构建），
+// 避免 srcDir '../shared' 与自带资源在 Gradle 9 下产生 duplicate 资源条目。
 processResources {
     inputs.property "version", project.version
     filesMatching("fabric.mod.json") {
@@ -33,13 +46,13 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    it.options.release = 21
+    it.options.release = 25
 }
 
 java {
     withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {

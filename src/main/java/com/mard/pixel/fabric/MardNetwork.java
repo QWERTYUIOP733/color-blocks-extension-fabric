@@ -26,7 +26,7 @@ package com.mard.pixel.fabric;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -46,7 +46,7 @@ public final class MardNetwork {
      */
     public record RequestItemPayload(String target) implements CustomPacketPayload {
         public static final Type<RequestItemPayload> TYPE =
-                new Type<>(ResourceLocation.fromNamespaceAndPath(MardPixelMod.MOD_ID, "request_item"));
+                new Type<>(Identifier.fromNamespaceAndPath(MardPixelMod.MOD_ID, "request_item"));
 
         public static final StreamCodec<FriendlyByteBuf, RequestItemPayload> CODEC =
                 StreamCodec.of(
@@ -65,7 +65,7 @@ public final class MardNetwork {
      */
     public record HotbarPayload(String code) implements CustomPacketPayload {
         public static final Type<HotbarPayload> TYPE =
-                new Type<>(ResourceLocation.fromNamespaceAndPath(MardPixelMod.MOD_ID, "hotbar"));
+                new Type<>(Identifier.fromNamespaceAndPath(MardPixelMod.MOD_ID, "hotbar"));
 
         public static final StreamCodec<FriendlyByteBuf, HotbarPayload> CODEC =
                 StreamCodec.of(
@@ -84,7 +84,7 @@ public final class MardNetwork {
      */
     public record CraftItemPayload(String code) implements CustomPacketPayload {
         public static final Type<CraftItemPayload> TYPE =
-                new Type<>(ResourceLocation.fromNamespaceAndPath(MardPixelMod.MOD_ID, "craft_item"));
+                new Type<>(Identifier.fromNamespaceAndPath(MardPixelMod.MOD_ID, "craft_item"));
 
         public static final StreamCodec<FriendlyByteBuf, CraftItemPayload> CODEC =
                 StreamCodec.of(
@@ -103,7 +103,7 @@ public final class MardNetwork {
      */
     public record SelectColorPayload(String code) implements CustomPacketPayload {
         public static final Type<SelectColorPayload> TYPE =
-                new Type<>(ResourceLocation.fromNamespaceAndPath(MardPixelMod.MOD_ID, "select_color"));
+                new Type<>(Identifier.fromNamespaceAndPath(MardPixelMod.MOD_ID, "select_color"));
 
         public static final StreamCodec<FriendlyByteBuf, SelectColorPayload> CODEC =
                 StreamCodec.of(

@@ -26,7 +26,7 @@ package com.mard.pixel.fabric;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.ChatFormatting;
@@ -34,8 +34,9 @@ import net.minecraft.commands.Commands;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
@@ -83,10 +84,11 @@ public class MardPixelMod implements ModInitializer {
         registerCreativeTabs();
 
         // 注册网络包类型
-        PayloadTypeRegistry.playC2S().register(MardNetwork.RequestItemPayload.TYPE, MardNetwork.RequestItemPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(MardNetwork.HotbarPayload.TYPE, MardNetwork.HotbarPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(MardNetwork.CraftItemPayload.TYPE, MardNetwork.CraftItemPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(MardNetwork.SelectColorPayload.TYPE, MardNetwork.SelectColorPayload.CODEC);
+        // 26.3 Fabric API：playC2S() 改名为 serverboundPlay()（play 阶段缓冲为 RegistryFriendlyByteBuf）
+        PayloadTypeRegistry.serverboundPlay().register(MardNetwork.RequestItemPayload.TYPE, MardNetwork.RequestItemPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(MardNetwork.HotbarPayload.TYPE, MardNetwork.HotbarPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(MardNetwork.CraftItemPayload.TYPE, MardNetwork.CraftItemPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(MardNetwork.SelectColorPayload.TYPE, MardNetwork.SelectColorPayload.CODEC);
 
         // 注册网络包（服务端接收）
         registerServerNetworking();
@@ -98,8 +100,8 @@ public class MardPixelMod implements ModInitializer {
                 ColorRegistry.getAllColors().size(), CREATIVE_TABS.size());
     }
 
-    public static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    public static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
 
     // ==================== 创造模式标签页 ====================
@@ -121,7 +123,7 @@ public class MardPixelMod implements ModInitializer {
             final String series = seriesList.get(i);
             final boolean isFirst = (i == 0);
 
-            CreativeModeTab tab = FabricItemGroup.builder()
+            CreativeModeTab tab = FabricCreativeModeTab.builder()
                     .title(Component.literal(series))
                     .icon(() -> {
                         // 用该系列第一个色块作为图标
@@ -160,28 +162,28 @@ public class MardPixelMod implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(MardNetwork.RequestItemPayload.TYPE,
                 (payload, context) -> {
                     String target = payload.target();
-                    context.player().server.execute(() -> MardNetwork.handleRequestItem(context.player(), target));
+                    context.server().execute(() -> MardNetwork.handleRequestItem(context.player(), target));
                 });
 
         // 输入色号放入快捷栏
         ServerPlayNetworking.registerGlobalReceiver(MardNetwork.HotbarPayload.TYPE,
                 (payload, context) -> {
                     String code = payload.code();
-                    context.player().server.execute(() -> MardNetwork.handleHotbar(context.player(), code));
+                    context.server().execute(() -> MardNetwork.handleHotbar(context.player(), code));
                 });
 
         // 使用七彩粉末合成
         ServerPlayNetworking.registerGlobalReceiver(MardNetwork.CraftItemPayload.TYPE,
                 (payload, context) -> {
                     String code = payload.code();
-                    context.player().server.execute(() -> MardNetwork.handleCraftItem(context.player(), code));
+                    context.server().execute(() -> MardNetwork.handleCraftItem(context.player(), code));
                 });
 
         // 合成台选择颜色
         ServerPlayNetworking.registerGlobalReceiver(MardNetwork.SelectColorPayload.TYPE,
                 (payload, context) -> {
                     String code = payload.code();
-                    context.player().server.execute(() -> MardNetwork.handleSelectColor(context.player(), code));
+                    context.server().execute(() -> MardNetwork.handleSelectColor(context.player(), code));
                 });
     }
 
@@ -278,7 +280,8 @@ public class MardPixelMod implements ModInitializer {
         stack.setCount(64);
         Component itemName = stack.getHoverName();
         player.getInventory().add(stack);
-        player.sendSystemMessage(Component.literal("已给予一组 ").append(itemName));
+        // 26.3 适配：高频给物成功提示走动作条（不进聊天历史），避免打开色板界面时聊天历史透出并堆叠；旧版 Screen 会隐藏聊天故仍用 sendSystemMessage，此处不回灌
+        player.sendOverlayMessage(Component.literal("已给予一组 ").append(itemName));
     }
 
     /**
@@ -311,9 +314,9 @@ public class MardPixelMod implements ModInitializer {
         }
         Component hotbarName = stack.getHoverName();
         if (!placed) {
-            player.drop(stack, false);
+            player.drop(stack, false, Prediction.SERVER_ONLY);
         }
-        player.sendSystemMessage(Component.literal("已放入快捷栏一组 ").append(hotbarName));
+        player.sendOverlayMessage(Component.literal("已放入快捷栏一组 ").append(hotbarName));
     }
 
     /**
@@ -363,10 +366,10 @@ public class MardPixelMod implements ModInitializer {
         Component craftName = stack.getHoverName();
         boolean placed = inv.add(stack);
         if (!placed) {
-            player.drop(stack, false);
+            player.drop(stack, false, Prediction.SERVER_ONLY);
         }
 
-        player.sendSystemMessage(Component.literal("消耗1个七彩粉末，合成一组 ")
+        player.sendOverlayMessage(Component.literal("消耗1个七彩粉末，合成一组 ")
                 .append(craftName));
     }
 }

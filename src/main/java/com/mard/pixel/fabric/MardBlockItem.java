@@ -26,12 +26,13 @@ package com.mard.pixel.fabric;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.block.Block;
 
-import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * 色块物品类，两行显示：
@@ -58,9 +59,9 @@ public class MardBlockItem extends BlockItem {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        // 第二行：RGB值（灰色），格式 "RGB #FF0000"
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag flag) {
+        // 第二行：RGB值（灰色），格式 "RGB #FF0000"（26.3 为 5 参签名，第 3 参 TooltipDisplay，文本走 Consumer）
         String hex = String.format("#%06X", rgb & 0xFFFFFF);
-        tooltip.add(Component.literal("RGB " + hex).withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("RGB " + hex).withStyle(ChatFormatting.GRAY));
     }
 }
